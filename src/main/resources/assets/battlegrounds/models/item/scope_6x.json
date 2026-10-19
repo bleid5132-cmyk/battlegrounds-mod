@@ -1,0 +1,124 @@
+{
+ "parent": "battlegrounds:item/att/scope_6x",
+ "display": {
+  "gui": {
+   "rotation": [
+    25,
+    225,
+    0
+   ],
+   "translation": [
+    0,
+    -1.742,
+    0
+   ],
+   "scale": [
+    0.968,
+    0.968,
+    0.968
+   ]
+  },
+  "ground": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    0,
+    2,
+    0
+   ],
+   "scale": [
+    0.3872,
+    0.3872,
+    0.3872
+   ]
+  },
+  "fixed": {
+   "rotation": [
+    0,
+    90,
+    0
+   ],
+   "translation": [
+    0,
+    -1.045,
+    0
+   ],
+   "scale": [
+    0.5808,
+    0.5808,
+    0.5808
+   ]
+  },
+  "thirdperson_righthand": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    0,
+    2,
+    0
+   ],
+   "scale": [
+    0.3388,
+    0.3388,
+    0.3388
+   ]
+  },
+  "thirdperson_lefthand": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    0,
+    2,
+    0
+   ],
+   "scale": [
+    0.3388,
+    0.3388,
+    0.3388
+   ]
+  },
+  "firstperson_righthand": {
+   "rotation": [
+    0,
+    -30,
+    0
+   ],
+   "translation": [
+    0,
+    2,
+    0
+   ],
+   "scale": [
+    0.3872,
+    0.3872,
+    0.3872
+   ]
+  },
+  "firstperson_lefthand": {
+   "rotation": [
+    0,
+    -30,
+    0
+   ],
+   "translation": [
+    0,
+    2,
+    0
+   ],
+   "scale": [
+    0.3872,
+    0.3872,
+    0.3872
+   ]
+  }
+ }
+}

@@ -1,6 +1,10 @@
 package com.battlegrounds.network;
 
+import com.battlegrounds.item.GunItem;
 import com.battlegrounds.player.BgPlayer;
+import com.battlegrounds.screen.AttachmentScreenHandler;
+import net.minecraft.screen.SimpleNamedScreenHandlerFactory;
+import net.minecraft.text.Text;
 import com.battlegrounds.weapon.GunLogic;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.util.math.MathHelper;
@@ -36,6 +40,19 @@ public final class ServerNetwork {
                 player.fallDistance = 0;
             });
         });
+
+        ServerPlayNetworking.registerGlobalReceiver(Packets.AIM, (server, player, handler, buf, sender) -> {
+            boolean aiming = buf.readBoolean();
+            server.execute(() -> BgPlayer.of(player).bg$setAiming(aiming));
+        });
+
+        ServerPlayNetworking.registerGlobalReceiver(Packets.OPEN_ATTACHMENTS, (server, player, handler, buf, sender) ->
+                server.execute(() -> {
+                    if (!(player.getMainHandStack().getItem() instanceof GunItem)) return;
+                    player.openHandledScreen(new SimpleNamedScreenHandlerFactory(
+                            (syncId, inv, p) -> new AttachmentScreenHandler(syncId, inv),
+                            Text.translatable("screen.battlegrounds.attachments")));
+                }));
     }
 
     private ServerNetwork() {

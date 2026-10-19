@@ -1,0 +1,23 @@
+{
+ "type": "minecraft:crafting_shaped",
+ "pattern": [
+  "CIC",
+  "III",
+  " G "
+ ],
+ "key": {
+  "I": {
+   "item": "minecraft:iron_ingot"
+  },
+  "C": {
+   "item": "minecraft:coal"
+  },
+  "G": {
+   "item": "minecraft:gunpowder"
+  }
+ },
+ "result": {
+  "item": "battlegrounds:famas",
+  "count": 1
+ }
+}

@@ -4,11 +4,12 @@
   "package": "com.battlegrounds.mixin.client",
   "compatibilityLevel": "JAVA_17",
   "client": [
-    "BipedEntityModelMixin",
     "CameraMixin",
     "GameRendererMixin",
     "HeldItemRendererMixin",
+    "InGameHudMixin",
     "MinecraftClientMixin",
+    "MouseMixin",
     "PlayerEntityRendererMixin"
   ],
   "injectors": {

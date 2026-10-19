@@ -1,0 +1,19 @@
+{
+ "type": "minecraft:crafting_shaped",
+ "pattern": [
+  "N N",
+  "NIN"
+ ],
+ "key": {
+  "I": {
+   "item": "minecraft:iron_ingot"
+  },
+  "N": {
+   "item": "minecraft:iron_nugget"
+  }
+ },
+ "result": {
+  "item": "battlegrounds:flash_hider",
+  "count": 1
+ }
+}

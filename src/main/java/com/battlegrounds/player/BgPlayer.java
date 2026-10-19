@@ -24,6 +24,10 @@ public interface BgPlayer {
 
     void bg$setMantling(boolean mantling);
 
+    boolean bg$isAiming();
+
+    void bg$setAiming(boolean aiming);
+
     /** Плавное значение наклона для отрисовки (только на клиенте). */
     float bg$getLeanAnim(float tickDelta);
 

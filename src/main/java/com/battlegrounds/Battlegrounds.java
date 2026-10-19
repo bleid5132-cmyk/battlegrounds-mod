@@ -2,6 +2,7 @@ package com.battlegrounds;
 
 import com.battlegrounds.network.ServerNetwork;
 import com.battlegrounds.registry.ModItems;
+import com.battlegrounds.registry.ModScreens;
 import com.battlegrounds.registry.ModSounds;
 import net.fabricmc.api.ModInitializer;
 import net.minecraft.util.Identifier;
@@ -20,6 +21,7 @@ public class Battlegrounds implements ModInitializer {
     public void onInitialize() {
         ModSounds.init();
         ModItems.init();
+        ModScreens.init();
         ServerNetwork.init();
         LOGGER.info("Battlegrounds loaded");
     }

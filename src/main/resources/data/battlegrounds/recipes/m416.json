@@ -1,13 +1,20 @@
 {
-  "type": "minecraft:crafting_shaped",
-  "pattern": [
-    "III",
-    "  I",
-    "  W"
-  ],
-  "key": {
-    "I": { "item": "minecraft:iron_ingot" },
-    "W": { "tag": "minecraft:planks" }
+ "type": "minecraft:crafting_shaped",
+ "pattern": [
+  "III",
+  "  I",
+  "  P"
+ ],
+ "key": {
+  "I": {
+   "item": "minecraft:iron_ingot"
   },
-  "result": { "item": "battlegrounds:m416" }
+  "P": {
+   "tag": "minecraft:planks"
+  }
+ },
+ "result": {
+  "item": "battlegrounds:m416",
+  "count": 1
+ }
 }

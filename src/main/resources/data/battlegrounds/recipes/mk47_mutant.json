@@ -1,0 +1,23 @@
+{
+ "type": "minecraft:crafting_shaped",
+ "pattern": [
+  "III",
+  "IG ",
+  "  C"
+ ],
+ "key": {
+  "I": {
+   "item": "minecraft:iron_ingot"
+  },
+  "G": {
+   "item": "minecraft:gunpowder"
+  },
+  "C": {
+   "item": "minecraft:coal"
+  }
+ },
+ "result": {
+  "item": "battlegrounds:mk47_mutant",
+  "count": 1
+ }
+}

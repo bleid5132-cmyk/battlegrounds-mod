@@ -24,7 +24,25 @@ jobs:
           gradle-version: '8.7'
 
       - name: Build
-        run: gradle build --stacktrace
+        shell: bash
+        run: |
+          set -o pipefail
+          gradle build --stacktrace 2>&1 | tee build.log
+
+      - name: Save build log on failure
+        if: failure()
+        shell: bash
+        run: |
+          git config user.name "build-bot"
+          git config user.email "build-bot@users.noreply.github.com"
+          cp build.log /tmp/build.log
+          git checkout --orphan build-logs
+          git rm -rf --cached . > /dev/null
+          rm -rf ./*
+          cp /tmp/build.log build.log
+          git add build.log
+          git commit -m "build log ${{ github.run_number }}"
+          git push -f origin build-logs
 
       - name: Pick jar
         id: jar

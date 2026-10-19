@@ -1,0 +1,23 @@
+{
+ "type": "minecraft:crafting_shaped",
+ "pattern": [
+  "III",
+  "GK ",
+  " K "
+ ],
+ "key": {
+  "I": {
+   "item": "minecraft:iron_ingot"
+  },
+  "G": {
+   "item": "minecraft:glass"
+  },
+  "K": {
+   "item": "minecraft:green_dye"
+  }
+ },
+ "result": {
+  "item": "battlegrounds:aug",
+  "count": 1
+ }
+}

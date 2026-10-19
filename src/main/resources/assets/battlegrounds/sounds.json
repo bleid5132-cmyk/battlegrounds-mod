@@ -1,19 +1,55 @@
 {
-  "m416_shot": {
+  "shot_556": {
     "subtitle": "subtitles.battlegrounds.shot",
-    "sounds": [{ "name": "battlegrounds:m416_shot", "attenuation_distance": 96 }]
+    "sounds": [
+      {
+        "name": "battlegrounds:shot_556",
+        "attenuation_distance": 96
+      }
+    ]
+  },
+  "shot_762": {
+    "subtitle": "subtitles.battlegrounds.shot",
+    "sounds": [
+      {
+        "name": "battlegrounds:shot_762",
+        "attenuation_distance": 112
+      }
+    ]
+  },
+  "shot_suppressed": {
+    "subtitle": "subtitles.battlegrounds.shot_suppressed",
+    "sounds": [
+      {
+        "name": "battlegrounds:shot_suppressed",
+        "attenuation_distance": 24
+      }
+    ]
   },
   "reload": {
     "subtitle": "subtitles.battlegrounds.reload",
-    "sounds": ["battlegrounds:reload"]
+    "sounds": [
+      "battlegrounds:reload"
+    ]
   },
   "dry_fire": {
-    "sounds": ["battlegrounds:dry_fire"]
+    "sounds": [
+      "battlegrounds:dry_fire"
+    ]
   },
   "fire_mode": {
-    "sounds": ["battlegrounds:fire_mode"]
+    "sounds": [
+      "battlegrounds:fire_mode"
+    ]
   },
   "bullet_impact": {
-    "sounds": ["battlegrounds:bullet_impact"]
+    "sounds": [
+      "battlegrounds:bullet_impact"
+    ]
+  },
+  "attach": {
+    "sounds": [
+      "battlegrounds:attach"
+    ]
   }
 }

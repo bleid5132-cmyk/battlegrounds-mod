@@ -26,6 +26,9 @@ public abstract class PlayerEntityMixin extends LivingEntity implements BgPlayer
     private static final TrackedData<Boolean> BG_MANTLE = DataTracker.registerData(PlayerEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
 
     @Unique
+    private static final TrackedData<Boolean> BG_AIM = DataTracker.registerData(PlayerEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
+
+    @Unique
     private float bg$leanAnim;
     @Unique
     private float bg$prevLeanAnim;
@@ -41,6 +44,7 @@ public abstract class PlayerEntityMixin extends LivingEntity implements BgPlayer
         this.dataTracker.startTracking(BG_STANCE, (byte) 0);
         this.dataTracker.startTracking(BG_LEAN, (byte) 0);
         this.dataTracker.startTracking(BG_MANTLE, false);
+        this.dataTracker.startTracking(BG_AIM, false);
     }
 
     @Override
@@ -75,6 +79,16 @@ public abstract class PlayerEntityMixin extends LivingEntity implements BgPlayer
         if (mantling) {
             this.setPose(EntityPose.SWIMMING);
         }
+    }
+
+    @Override
+    public boolean bg$isAiming() {
+        return this.dataTracker.get(BG_AIM);
+    }
+
+    @Override
+    public void bg$setAiming(boolean aiming) {
+        this.dataTracker.set(BG_AIM, aiming);
     }
 
     @Override

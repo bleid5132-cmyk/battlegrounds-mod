@@ -39,7 +39,18 @@ import java.util.UUID;
 public final class GunLogic {
     public static final RegistryKey<DamageType> BULLET = RegistryKey.of(RegistryKeys.DAMAGE_TYPE, Battlegrounds.id("bullet"));
 
-    private static final Map<UUID, Long> LAST_SHOT = new HashMap<>();
+    /** Запас выстрелов у игрока: пополняется со временем, выстрел тратит 1. Позволяет темп быстрее 20 выстр/сек. */
+    private static final Map<UUID, double[]> BUDGET = new HashMap<>();
+
+    private static boolean takeShot(ServerPlayerEntity player, GunStats s, long now) {
+        double[] b = BUDGET.computeIfAbsent(player.getUuid(), k -> new double[]{2.0, now});
+        double cap = Math.max(2.0, s.burstCount());
+        b[0] = Math.min(cap, b[0] + (now - b[1]) * 0.05 / s.fireDelay());
+        b[1] = now;
+        if (b[0] < 0.95) return false;
+        b[0] -= 1.0;
+        return true;
+    }
 
     // ---------------- стрельба ----------------
 
@@ -50,17 +61,15 @@ public final class GunLogic {
         ServerWorld world = player.getServerWorld();
         long now = world.getTime();
 
-        Long last = LAST_SHOT.get(player.getUuid());
-        if (last != null && now - last < s.fireInterval()) return;
         if (GunItem.isReloading(stack) || BgPlayer.of(player).bg$isMantling()) return;
+        if (!takeShot(player, s, now)) return;
+        Attachments.Mods mods = Attachments.compute(stack, s);
 
         int ammo = GunItem.getAmmo(stack);
         if (ammo <= 0) {
-            LAST_SHOT.put(player.getUuid(), now);
             player.playSound(ModSounds.DRY_FIRE, SoundCategory.PLAYERS, 1.0f, 1.0f);
             return;
         }
-        LAST_SHOT.put(player.getUuid(), now);
         GunItem.setAmmo(stack, ammo - 1);
         player.setSprinting(false);
 
@@ -91,10 +100,12 @@ public final class GunLogic {
                 origin.squaredDistanceTo(blockEnd));
 
         // звук и вспышка
-        world.playSound(null, player.getX(), player.getEyeY(), player.getZ(), ModSounds.M416_SHOT,
-                SoundCategory.PLAYERS, 4.0f, 0.95f + rnd.nextFloat() * 0.1f);
+        world.playSound(null, player.getX(), player.getEyeY(), player.getZ(), ModSounds.shotFor(s.ammo(), mods.suppressed()),
+                SoundCategory.PLAYERS, mods.suppressed() ? 1.2f : 4.0f, s.soundPitch() * (0.95f + rnd.nextFloat() * 0.1f));
         Vec3d muzzle = origin.add(dir.multiply(1.0)).add(aiming ? Vec3d.ZERO : right.multiply(0.25)).add(0, aiming ? -0.05 : -0.15, 0);
-        world.spawnParticles(ParticleTypes.SMALL_FLAME, muzzle.x, muzzle.y, muzzle.z, 2, 0.02, 0.02, 0.02, 0.0);
+        if (!mods.flashHidden()) {
+            world.spawnParticles(ParticleTypes.SMALL_FLAME, muzzle.x, muzzle.y, muzzle.z, 2, 0.02, 0.02, 0.02, 0.0);
+        }
         world.spawnParticles(ParticleTypes.SMOKE, muzzle.x, muzzle.y, muzzle.z, 1, 0.02, 0.02, 0.02, 0.01);
 
         Vec3d hitPos;
@@ -108,7 +119,8 @@ public final class GunLogic {
             hitPos = end;
         }
 
-        // трассер
+        // трассер (с глушителем не виден)
+        if (mods.suppressed()) return;
         double dist = origin.distanceTo(hitPos);
         for (double d = 3.0; d < Math.min(dist, 60.0); d += 2.5) {
             Vec3d p = origin.add(dir.multiply(d));
@@ -162,21 +174,22 @@ public final class GunLogic {
         ItemStack stack = player.getMainHandStack();
         if (!(stack.getItem() instanceof GunItem gun)) return;
         if (GunItem.isReloading(stack)) return;
-        if (GunItem.getAmmo(stack) >= gun.stats.magazine()) return;
+        Attachments.Mods mods = Attachments.compute(stack, gun.stats);
+        if (GunItem.getAmmo(stack) >= mods.capacity()) return;
         if (!player.isCreative() && countAmmo(player.getInventory(), gun.stats.ammo()) <= 0) {
             player.playSound(ModSounds.DRY_FIRE, SoundCategory.PLAYERS, 1.0f, 0.8f);
             return;
         }
         long now = player.getWorld().getTime();
         stack.getOrCreateNbt().putLong(GunItem.RELOAD_START, now);
-        stack.getOrCreateNbt().putLong(GunItem.RELOAD_END, now + gun.stats.reloadTicks());
+        stack.getOrCreateNbt().putLong(GunItem.RELOAD_END, now + Math.round(gun.stats.reloadTicks() * mods.reloadMul()));
         player.getWorld().playSound(null, player.getX(), player.getY(), player.getZ(), ModSounds.RELOAD,
                 SoundCategory.PLAYERS, 1.0f, 1.0f);
     }
 
     public static void finishReload(ServerPlayerEntity player, ItemStack stack, GunItem gun) {
         int have = GunItem.getAmmo(stack);
-        int need = gun.stats.magazine() - have;
+        int need = Math.max(0, gun.getCapacity(stack) - have);
         int got = player.isCreative() ? need : takeAmmo(player.getInventory(), gun.stats.ammo(), need);
         GunItem.setAmmo(stack, have + got);
         GunItem.clearReload(stack);
@@ -208,9 +221,21 @@ public final class GunLogic {
 
     public static void toggleMode(ServerPlayerEntity player) {
         ItemStack stack = player.getMainHandStack();
-        if (!(stack.getItem() instanceof GunItem gun) || !gun.stats.automatic()) return;
-        GunItem.setMode(stack, GunItem.getMode(stack) == 0 ? 1 : 0);
+        if (!(stack.getItem() instanceof GunItem gun) || gun.stats.modes().size() < 2) return;
+        GunItem.setModeIndex(stack, (GunItem.getModeIndex(stack) + 1) % gun.stats.modes().size());
         player.playSound(ModSounds.FIRE_MODE, SoundCategory.PLAYERS, 1.0f, 1.0f);
+    }
+
+    /** Убирает лишние патроны, если сняли расширенный магазин: возвращает их в инвентарь. */
+    public static void clampAmmo(ServerPlayerEntity player, ItemStack stack, GunItem gun) {
+        int cap = gun.getCapacity(stack);
+        int have = GunItem.getAmmo(stack);
+        if (have <= cap) return;
+        GunItem.setAmmo(stack, cap);
+        if (player.isCreative()) return;
+        net.minecraft.item.Item ammoItem = gun.stats.ammo() == AmmoType.A762
+                ? com.battlegrounds.registry.ModItems.AMMO_762 : com.battlegrounds.registry.ModItems.AMMO_556;
+        player.getInventory().offerOrDrop(new ItemStack(ammoItem, have - cap));
     }
 
     private GunLogic() {

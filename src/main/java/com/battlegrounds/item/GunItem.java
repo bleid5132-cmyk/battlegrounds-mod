@@ -1,5 +1,7 @@
 package com.battlegrounds.item;
 
+import com.battlegrounds.weapon.Attachments;
+import com.battlegrounds.weapon.FireMode;
 import com.battlegrounds.weapon.GunLogic;
 import com.battlegrounds.weapon.GunStats;
 import net.minecraft.block.BlockState;
@@ -68,18 +70,24 @@ public class GunItem extends Item {
         }
     }
 
-    /** 0 = автоматический огонь, 1 = одиночный */
-    public static int getMode(ItemStack stack) {
+    /** Индекс режима огня в списке режимов оружия. */
+    public static int getModeIndex(ItemStack stack) {
         NbtCompound nbt = stack.getNbt();
         return nbt == null ? 0 : nbt.getByte(MODE);
     }
 
-    public static void setMode(ItemStack stack, int mode) {
+    public static void setModeIndex(ItemStack stack, int mode) {
         stack.getOrCreateNbt().putByte(MODE, (byte) mode);
     }
 
-    public boolean isAutoMode(ItemStack stack) {
-        return stats.automatic() && getMode(stack) == 0;
+    public FireMode getFireMode(ItemStack stack) {
+        int i = getModeIndex(stack);
+        if (i < 0 || i >= stats.modes().size()) i = 0;
+        return stats.modes().get(i);
+    }
+
+    public int getCapacity(ItemStack stack) {
+        return Attachments.compute(stack, stats).capacity();
     }
 
     public ItemStack createLoaded() {
@@ -131,21 +139,25 @@ public class GunItem extends Item {
 
     @Override
     public int getItemBarStep(ItemStack stack) {
-        return Math.round(13.0f * getAmmo(stack) / stats.magazine());
+        return Math.round(13.0f * Math.min(1f, (float) getAmmo(stack) / getCapacity(stack)));
     }
 
     @Override
     public int getItemBarColor(ItemStack stack) {
-        float f = (float) getAmmo(stack) / stats.magazine();
+        float f = Math.min(1f, (float) getAmmo(stack) / getCapacity(stack));
         return MathHelper.hsvToRgb(f / 3.0f, 0.8f, 1.0f);
     }
 
     @Override
     public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
-        tooltip.add(Text.translatable("tooltip.battlegrounds.ammo", getAmmo(stack), stats.magazine()).formatted(Formatting.GOLD));
+        tooltip.add(Text.translatable("tooltip.battlegrounds.ammo", getAmmo(stack), getCapacity(stack)).formatted(Formatting.GOLD));
         tooltip.add(Text.translatable("tooltip.battlegrounds.caliber", stats.ammo().label).formatted(Formatting.GRAY));
         tooltip.add(Text.translatable("tooltip.battlegrounds.damage", Math.round(stats.damage() * 5)).formatted(Formatting.GRAY));
-        tooltip.add(Text.translatable("tooltip.battlegrounds.rpm", Math.round(1200f / stats.fireInterval())).formatted(Formatting.GRAY));
-        tooltip.add(Text.translatable(isAutoMode(stack) ? "hud.battlegrounds.mode.auto" : "hud.battlegrounds.mode.single").formatted(Formatting.DARK_GRAY));
+        tooltip.add(Text.translatable("tooltip.battlegrounds.rpm", Math.round(60f / stats.fireDelay())).formatted(Formatting.GRAY));
+        tooltip.add(Text.translatable(getFireMode(stack).langKey).formatted(Formatting.DARK_GRAY));
+        for (com.battlegrounds.weapon.AttachmentSlot slot : com.battlegrounds.weapon.AttachmentSlot.values()) {
+            com.battlegrounds.weapon.AttachmentType t = Attachments.get(stack, slot);
+            if (t != null) tooltip.add(Text.literal(" + ").append(Text.translatable("item.battlegrounds." + t.id)).formatted(Formatting.DARK_AQUA));
+        }
     }
 }

@@ -1,0 +1,124 @@
+{
+ "parent": "battlegrounds:item/att/suppressor",
+ "display": {
+  "gui": {
+   "rotation": [
+    25,
+    225,
+    0
+   ],
+   "translation": [
+    0,
+    -0.0,
+    0
+   ],
+   "scale": [
+    1.558,
+    1.558,
+    1.558
+   ]
+  },
+  "ground": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    0,
+    2,
+    0
+   ],
+   "scale": [
+    0.6232000000000001,
+    0.6232000000000001,
+    0.6232000000000001
+   ]
+  },
+  "fixed": {
+   "rotation": [
+    0,
+    90,
+    0
+   ],
+   "translation": [
+    0,
+    -0.0,
+    0
+   ],
+   "scale": [
+    0.9348,
+    0.9348,
+    0.9348
+   ]
+  },
+  "thirdperson_righthand": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    0,
+    2,
+    0
+   ],
+   "scale": [
+    0.5453,
+    0.5453,
+    0.5453
+   ]
+  },
+  "thirdperson_lefthand": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    0,
+    2,
+    0
+   ],
+   "scale": [
+    0.5453,
+    0.5453,
+    0.5453
+   ]
+  },
+  "firstperson_righthand": {
+   "rotation": [
+    0,
+    -30,
+    0
+   ],
+   "translation": [
+    0,
+    2,
+    0
+   ],
+   "scale": [
+    0.6232000000000001,
+    0.6232000000000001,
+    0.6232000000000001
+   ]
+  },
+  "firstperson_lefthand": {
+   "rotation": [
+    0,
+    -30,
+    0
+   ],
+   "translation": [
+    0,
+    2,
+    0
+   ],
+   "scale": [
+    0.6232000000000001,
+    0.6232000000000001,
+    0.6232000000000001
+   ]
+  }
+ }
+}

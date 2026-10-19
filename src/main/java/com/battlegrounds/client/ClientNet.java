@@ -40,6 +40,16 @@ public final class ClientNet {
         send(Packets.MANTLE, buf);
     }
 
+    public static void aim(boolean aiming) {
+        PacketByteBuf buf = PacketByteBufs.create();
+        buf.writeBoolean(aiming);
+        send(Packets.AIM, buf);
+    }
+
+    public static void openAttachments() {
+        send(Packets.OPEN_ATTACHMENTS, PacketByteBufs.empty());
+    }
+
     private static void send(Identifier id, PacketByteBuf buf) {
         if (ClientPlayNetworking.canSend(id)) {
             ClientPlayNetworking.send(id, buf);

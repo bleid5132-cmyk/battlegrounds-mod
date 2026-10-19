@@ -1,0 +1,124 @@
+{
+ "parent": "battlegrounds:item/att/extended_quickdraw_mag",
+ "display": {
+  "gui": {
+   "rotation": [
+    25,
+    225,
+    0
+   ],
+   "translation": [
+    0,
+    5.04,
+    0
+   ],
+   "scale": [
+    2.4,
+    2.4,
+    2.4
+   ]
+  },
+  "ground": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    0,
+    2,
+    0
+   ],
+   "scale": [
+    0.96,
+    0.96,
+    0.96
+   ]
+  },
+  "fixed": {
+   "rotation": [
+    0,
+    90,
+    0
+   ],
+   "translation": [
+    0,
+    3.024,
+    0
+   ],
+   "scale": [
+    1.44,
+    1.44,
+    1.44
+   ]
+  },
+  "thirdperson_righthand": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    0,
+    2,
+    0
+   ],
+   "scale": [
+    0.84,
+    0.84,
+    0.84
+   ]
+  },
+  "thirdperson_lefthand": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    0,
+    2,
+    0
+   ],
+   "scale": [
+    0.84,
+    0.84,
+    0.84
+   ]
+  },
+  "firstperson_righthand": {
+   "rotation": [
+    0,
+    -30,
+    0
+   ],
+   "translation": [
+    0,
+    2,
+    0
+   ],
+   "scale": [
+    0.96,
+    0.96,
+    0.96
+   ]
+  },
+  "firstperson_lefthand": {
+   "rotation": [
+    0,
+    -30,
+    0
+   ],
+   "translation": [
+    0,
+    2,
+    0
+   ],
+   "scale": [
+    0.96,
+    0.96,
+    0.96
+   ]
+  }
+ }
+}

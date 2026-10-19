@@ -1,0 +1,124 @@
+{
+ "parent": "battlegrounds:item/att/scope_4x",
+ "display": {
+  "gui": {
+   "rotation": [
+    25,
+    225,
+    0
+   ],
+   "translation": [
+    0,
+    -2.37,
+    0
+   ],
+   "scale": [
+    1.481,
+    1.481,
+    1.481
+   ]
+  },
+  "ground": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    0,
+    2,
+    0
+   ],
+   "scale": [
+    0.5924,
+    0.5924,
+    0.5924
+   ]
+  },
+  "fixed": {
+   "rotation": [
+    0,
+    90,
+    0
+   ],
+   "translation": [
+    0,
+    -1.422,
+    0
+   ],
+   "scale": [
+    0.8886000000000001,
+    0.8886000000000001,
+    0.8886000000000001
+   ]
+  },
+  "thirdperson_righthand": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    0,
+    2,
+    0
+   ],
+   "scale": [
+    0.51835,
+    0.51835,
+    0.51835
+   ]
+  },
+  "thirdperson_lefthand": {
+   "rotation": [
+    0,
+    0,
+    0
+   ],
+   "translation": [
+    0,
+    2,
+    0
+   ],
+   "scale": [
+    0.51835,
+    0.51835,
+    0.51835
+   ]
+  },
+  "firstperson_righthand": {
+   "rotation": [
+    0,
+    -30,
+    0
+   ],
+   "translation": [
+    0,
+    2,
+    0
+   ],
+   "scale": [
+    0.5924,
+    0.5924,
+    0.5924
+   ]
+  },
+  "firstperson_lefthand": {
+   "rotation": [
+    0,
+    -30,
+    0
+   ],
+   "translation": [
+    0,
+    2,
+    0
+   ],
+   "scale": [
+    0.5924,
+    0.5924,
+    0.5924
+   ]
+  }
+ }
+}
