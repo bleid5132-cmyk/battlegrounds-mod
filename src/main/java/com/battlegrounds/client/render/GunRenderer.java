@@ -36,6 +36,10 @@ public class GunRenderer implements BuiltinItemRendererRegistry.DynamicItemRende
     @Override
     public void render(ItemStack stack, ModelTransformationMode mode, MatrixStack matrices,
                        VertexConsumerProvider vertexConsumers, int light, int overlay) {
+        if (com.battlegrounds.client.geo.GeoAssets.get(gunId) != null) {
+            GeoGunItemRenderer.render(gunId, stack, mode, matrices, vertexConsumers, light, overlay);
+            return;
+        }
         MinecraftClient mc = MinecraftClient.getInstance();
         ItemRenderer ir = mc.getItemRenderer();
         matrices.push();

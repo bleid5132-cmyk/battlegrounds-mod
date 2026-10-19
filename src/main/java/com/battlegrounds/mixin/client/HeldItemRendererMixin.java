@@ -1,6 +1,7 @@
 package com.battlegrounds.mixin.client;
 
 import com.battlegrounds.client.ClientController;
+import com.battlegrounds.client.geo.FirstPersonGun;
 import com.battlegrounds.client.render.GunMounts;
 import com.battlegrounds.item.GunItem;
 import com.battlegrounds.player.BgPlayer;
@@ -34,6 +35,12 @@ public abstract class HeldItemRendererMixin {
                         int light, CallbackInfo ci) {
         if (hand != Hand.MAIN_HAND || !(item.getItem() instanceof GunItem gun)) {
             matrices.push();
+            return;
+        }
+        // оружие с костной моделью: свой вид от первого лица по точкам камеры
+        if (FirstPersonGun.handles(item) && player instanceof net.minecraft.client.network.ClientPlayerEntity cp) {
+            FirstPersonGun.render(cp, tickDelta, item, matrices, vertexConsumers, light);
+            ci.cancel();
             return;
         }
         Attachments.Mods mods = Attachments.compute(item, gun.stats);

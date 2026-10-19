@@ -1,6 +1,7 @@
 package com.battlegrounds.client;
 
 import com.battlegrounds.client.anim.BodyAnimator;
+import com.battlegrounds.client.geo.GeoAssets;
 import com.battlegrounds.client.render.GunRenderer;
 import com.battlegrounds.client.screen.AttachmentScreen;
 import com.battlegrounds.item.GunItem;
@@ -43,6 +44,9 @@ public class BattlegroundsClient implements ClientModInitializer {
         ClientTickEvents.END_CLIENT_TICK.register(ClientController::tick);
         HudRenderCallback.EVENT.register(Hud::render);
         HandledScreens.register(ModScreens.ATTACHMENTS, AttachmentScreen::new);
+
+        // костные модели и анимации оружия (вид от первого лица по эталону)
+        GeoAssets.init("m416");
 
         // модели оружия и обвесов, которые собираются на лету
         List<Identifier> extra = new ArrayList<>();

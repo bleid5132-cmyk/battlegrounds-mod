@@ -1,5 +1,6 @@
 package com.battlegrounds.client;
 
+import com.battlegrounds.client.geo.FirstPersonGun;
 import com.battlegrounds.item.GunItem;
 import com.battlegrounds.player.BgPlayer;
 import com.battlegrounds.weapon.Attachments;
@@ -59,6 +60,7 @@ public final class ClientController {
         if (slot != lastSlot || (stack.getItem() != lastStackRef.getItem())) {
             equipTicks = 0;
             burstLeft = 0;
+            FirstPersonGun.onEquip(stack);
         }
         lastSlot = slot;
         lastStackRef = stack;
@@ -109,7 +111,9 @@ public final class ClientController {
         Mantle.tick(p);
 
         // ---------- прицеливание ----------
-        boolean wantAim = gun != null && inGame && mc.options.useKey.isPressed() && !Mantle.isActive() && equipTicks > 4;
+        int readyTicks = FirstPersonGun.handles(stack) ? Math.round(FirstPersonGun.drawLength(stack) * 20f * 0.8f) : 6;
+        boolean wantAim = gun != null && inGame && mc.options.useKey.isPressed() && !Mantle.isActive() && equipTicks > readyTicks - 2
+                && !(FirstPersonGun.handles(stack) && GunItem.isReloading(stack));
         if (wantAim && !aiming) {
             Perspective persp = mc.options.getPerspective();
             if (!persp.isFirstPerson()) {
@@ -146,7 +150,7 @@ public final class ClientController {
         }
 
         // ---------- стрельба ----------
-        boolean attackDown = gun != null && inGame && mc.options.attackKey.isPressed() && !Mantle.isActive() && equipTicks > 6;
+        boolean attackDown = gun != null && inGame && mc.options.attackKey.isPressed() && !Mantle.isActive() && equipTicks > readyTicks;
         if (gun != null) {
             FireMode mode = gun.getFireMode(stack);
             boolean newPress = attackDown && !wasAttackDown;
@@ -177,6 +181,7 @@ public final class ClientController {
                     }
                     ClientNet.fire(aiming);
                     addRecoil(p, gun, bg);
+                    FirstPersonGun.onShoot(stack);
                     p.setSprinting(false);
                     fireCredit -= delay;
                     shots++;

@@ -42,8 +42,9 @@ public record GunStats(
         return true;
     }
 
+    // перезарядка: 2.3 с с патроном в патроннике, 2.6 с с пустым магазином
     public static final GunStats M416 = new GunStats("m416", AmmoType.A556, 8.2f, 30, 40,
-            0.0857f, 42, 2.2f, 0.25f, 0.85f, 0.35f, 300f, 2.35f, 1.25f,
+            0.0857f, 46, 2.2f, 0.25f, 0.85f, 0.35f, 300f, 2.35f, 1.25f,
             List.of(AUTO, SINGLE), 1, ALL, 1.0f);
 
     public static final GunStats AKM = new GunStats("akm", AmmoType.A762, 9.4f, 30, 40,

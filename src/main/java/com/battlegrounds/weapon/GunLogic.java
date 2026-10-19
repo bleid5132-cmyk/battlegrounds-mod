@@ -182,7 +182,7 @@ public final class GunLogic {
         }
         long now = player.getWorld().getTime();
         stack.getOrCreateNbt().putLong(GunItem.RELOAD_START, now);
-        stack.getOrCreateNbt().putLong(GunItem.RELOAD_END, now + Math.round(gun.stats.reloadTicks() * mods.reloadMul()));
+        stack.getOrCreateNbt().putLong(GunItem.RELOAD_END, now + Math.round(gun.stats.reloadTicks() * (GunItem.getAmmo(stack) == 0 ? 1.13f : 1f) * mods.reloadMul()));
         player.getWorld().playSound(null, player.getX(), player.getY(), player.getZ(), ModSounds.RELOAD,
                 SoundCategory.PLAYERS, 1.0f, 1.0f);
     }
