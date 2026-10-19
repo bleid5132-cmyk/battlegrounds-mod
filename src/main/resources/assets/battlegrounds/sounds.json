@@ -1,0 +1,19 @@
+{
+  "m416_shot": {
+    "subtitle": "subtitles.battlegrounds.shot",
+    "sounds": [{ "name": "battlegrounds:m416_shot", "attenuation_distance": 96 }]
+  },
+  "reload": {
+    "subtitle": "subtitles.battlegrounds.reload",
+    "sounds": ["battlegrounds:reload"]
+  },
+  "dry_fire": {
+    "sounds": ["battlegrounds:dry_fire"]
+  },
+  "fire_mode": {
+    "sounds": ["battlegrounds:fire_mode"]
+  },
+  "bullet_impact": {
+    "sounds": ["battlegrounds:bullet_impact"]
+  }
+}

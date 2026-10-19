@@ -1,0 +1,28 @@
+{
+  "item.battlegrounds.m416": "M416",
+  "item.battlegrounds.ammo_556": "5.56mm Ammo",
+  "itemGroup.battlegrounds.main": "Battlegrounds",
+
+  "category.battlegrounds": "Battlegrounds",
+  "key.battlegrounds.reload": "Reload",
+  "key.battlegrounds.fire_mode": "Fire Mode",
+  "key.battlegrounds.crouch": "Crouch (toggle)",
+  "key.battlegrounds.prone": "Prone (toggle)",
+
+  "tooltip.battlegrounds.ammo": "Ammo: %s / %s",
+  "tooltip.battlegrounds.caliber": "Caliber: %s",
+  "tooltip.battlegrounds.damage": "Damage: %s",
+  "tooltip.battlegrounds.rpm": "Fire rate: %s RPM",
+
+  "hud.battlegrounds.mode.auto": "AUTO",
+  "hud.battlegrounds.mode.single": "SINGLE",
+  "hud.battlegrounds.reloading": "Reloading",
+  "hud.battlegrounds.crouch": "Crouching",
+  "hud.battlegrounds.prone": "Prone",
+
+  "subtitles.battlegrounds.shot": "Gunshot",
+  "subtitles.battlegrounds.reload": "Reloading",
+
+  "death.attack.battlegrounds.bullet": "%1$s was shot",
+  "death.attack.battlegrounds.bullet.player": "%1$s was shot by %2$s"
+}

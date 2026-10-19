@@ -1,0 +1,28 @@
+{
+  "item.battlegrounds.m416": "M416",
+  "item.battlegrounds.ammo_556": "Патроны 5.56 мм",
+  "itemGroup.battlegrounds.main": "Battlegrounds",
+
+  "category.battlegrounds": "Battlegrounds",
+  "key.battlegrounds.reload": "Перезарядка",
+  "key.battlegrounds.fire_mode": "Режим огня",
+  "key.battlegrounds.crouch": "Присесть (переключение)",
+  "key.battlegrounds.prone": "Лечь (переключение)",
+
+  "tooltip.battlegrounds.ammo": "Патроны: %s / %s",
+  "tooltip.battlegrounds.caliber": "Калибр: %s",
+  "tooltip.battlegrounds.damage": "Урон: %s",
+  "tooltip.battlegrounds.rpm": "Скорострельность: %s выстр/мин",
+
+  "hud.battlegrounds.mode.auto": "АВТО",
+  "hud.battlegrounds.mode.single": "ОДИНОЧНЫЙ",
+  "hud.battlegrounds.reloading": "Перезарядка",
+  "hud.battlegrounds.crouch": "Присел",
+  "hud.battlegrounds.prone": "Лёжа",
+
+  "subtitles.battlegrounds.shot": "Выстрел",
+  "subtitles.battlegrounds.reload": "Перезарядка",
+
+  "death.attack.battlegrounds.bullet": "%1$s застрелен",
+  "death.attack.battlegrounds.bullet.player": "%1$s застрелен игроком %2$s"
+}

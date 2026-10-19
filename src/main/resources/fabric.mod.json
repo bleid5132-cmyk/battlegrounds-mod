@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "id": "battlegrounds",
+  "version": "${version}",
+  "name": "Battlegrounds",
+  "description": "Королевская битва в Minecraft: оружие, обвесы, гранаты, позы, наклоны и вид из-за плеча.",
+  "authors": ["bleid5132"],
+  "license": "All-Rights-Reserved",
+  "icon": "assets/battlegrounds/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": ["com.battlegrounds.Battlegrounds"],
+    "client": ["com.battlegrounds.client.BattlegroundsClient"]
+  },
+  "mixins": [
+    "battlegrounds.mixins.json",
+    {
+      "config": "battlegrounds.client.mixins.json",
+      "environment": "client"
+    }
+  ],
+  "depends": {
+    "fabricloader": ">=0.15.0",
+    "minecraft": "~1.20.1",
+    "java": ">=17",
+    "fabric-api": "*"
+  }
+}
