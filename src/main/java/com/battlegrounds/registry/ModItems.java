@@ -26,7 +26,7 @@ public final class ModItems {
                     .displayName(Text.translatable("itemGroup.battlegrounds.main"))
                     .entries((context, entries) -> {
                         entries.add(M416.createLoaded());
-                        entries.add(new ItemStack(AMMO_556, 64));
+                        entries.add(AMMO_556);
                     })
                     .build());
 
