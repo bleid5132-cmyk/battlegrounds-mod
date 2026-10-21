@@ -521,7 +521,7 @@ def hand(name, parent, grip, toward, length_scale, side_hint=(1, 0, 0)):
     bone(name, parent, pivot=grip, rot=euler_from_matrix(Rm), scale=[1, length_scale, 1])
 
 
-hand('righthand', G, grip=(0.25, 4.7, 3.7), toward=(0.42, -0.36, 0.83), length_scale=1.2)
+hand('righthand', G, grip=(0.25, 4.1, 3.9), toward=(0.42, -0.36, 0.83), length_scale=1.2)
 hand('lefthand', 'mag_and_hand', grip=(-0.2, 6.9, -10.6), toward=(-0.30, -0.40, 0.86), length_scale=1.5)
 
 # ================================================================== точки крепления, камера
@@ -569,6 +569,60 @@ narrow('magazine', 0.6)                         # магазин 1.8 -> 1.1
 narrow('mag_lower', 0.6)
 narrow('stock_default', 0.875)
 narrow('charge_handle', 0.875)
+
+# ------------------------------------------------------------------ высота как в эталоне TACZ
+# над осью ствола: планка 2.6 -> 1.75 px; цевьё под осью: 2.7 -> 1.5 px; рукоять 4.5 -> 6 px.
+KU = 1.75 / 2.6
+KL = 1.5 / 2.7
+
+
+def fy(y, z, lower_hg=True):
+    if y >= BORE:
+        return BORE + (y - BORE) * KU
+    if lower_hg and HG0 - 0.5 <= z <= HG1 + 0.1:
+        return BORE - (BORE - y) * KL
+    return y
+
+
+def squash(bn, lower_hg=True, shift_only=None):
+    for c in _by[bn]['cubes']:
+        zc = (c['f'][2] + c['t'][2]) / 2
+        if shift_only is not None:
+            c['f'][1] = round(c['f'][1] + shift_only, 4); c['t'][1] = round(c['t'][1] + shift_only, 4)
+            if 'o' in c:
+                c['o'][1] = round(c['o'][1] + shift_only, 4)
+            continue
+        if 'r' in c and not (c['r'][0] != 0 and c['r'][1] == 0 and c['r'][2] == 0):
+            oy = c['o'][1]
+            dy = fy(oy, zc, lower_hg) - oy
+            c['f'][1] = round(c['f'][1] + dy, 4); c['t'][1] = round(c['t'][1] + dy, 4); c['o'][1] = round(oy + dy, 4)
+        else:
+            c['f'][1] = round(fy(c['f'][1], zc, lower_hg), 4)
+            c['t'][1] = round(fy(c['t'][1], zc, lower_hg), 4)
+            if 'o' in c:
+                c['o'][1] = round(fy(c['o'][1], zc, lower_hg), 4)
+
+
+squash(G)
+squash('stock_default', lower_hg=False)
+squash('charge_handle', lower_hg=False)
+_by['charge_handle']['pivot'][1] = round(fy(_by['charge_handle']['pivot'][1], 7.0, False), 4)
+RAIL_DY = fy(12.1, 0) - 12.1                      # прицельные стоят на планке — опускаем целиком
+for sb in ('sight_front', 'sight_rear'):
+    squash(sb, shift_only=RAIL_DY)
+    _by[sb]['pivot'][1] = round(_by[sb]['pivot'][1] + RAIL_DY, 4)
+# рукоять длиннее вниз (в своей системе, от верха 6.8)
+for c in _by['pgrip']['cubes']:
+    for k in ('f', 't', 'o'):
+        if k in c:
+            c[k][1] = round(6.8 - (6.8 - c[k][1]) * (6.0 / 4.5), 4)
+# точки: прицел, рукоятка, левая/правая рука, глаз в прицеле
+_by['scope_pos']['pivot'][1] = round(fy(12.1, 0.6), 4)
+_by['grip_pos']['pivot'][1] = round(fy(6.95, -10.3), 4)
+_by['iron_view']['pivot'][1] = round(13.3 + RAIL_DY, 4)
+LEFT_Y = round(fy(6.9, -10.6), 4)
+_by['lefthand']['pivot'][1] = LEFT_Y
+
 
 # ------------------------------------------------------------------ запись
 cubes = sum(len(b['cubes']) for b in bones)
