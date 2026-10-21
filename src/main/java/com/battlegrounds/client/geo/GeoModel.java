@@ -24,7 +24,7 @@ public final class GeoModel {
         /** Необязательный поворот куба (градусы) вокруг точки origin. */
         public Vector3f rot, origin;
 
-        Cube(float x0, float y0, float z0, float x1, float y1, float z1, int swatch) {
+        public Cube(float x0, float y0, float z0, float x1, float y1, float z1, int swatch) {
             this.x0 = x0; this.y0 = y0; this.z0 = z0;
             this.x1 = x1; this.y1 = y1; this.z1 = z1;
             this.swatch = swatch;
@@ -51,6 +51,15 @@ public final class GeoModel {
         }
     }
 
+    /** Параметры гильзы (может не быть). */
+    public static final class ShellInfo {
+        public float sx = 0.42f, sy = 0.42f, sz = 1.75f;
+        public int swatch, swatchEnd;
+        public final Vector3f velocity = new Vector3f(70, 28, 10), random = new Vector3f(15, 15, 4), spin = new Vector3f(360, -1200, 90);
+        public float gravity = -160f, life = 1f;
+    }
+
+    public ShellInfo shell;
     public final Identifier texture;
     public final int texWidth, texHeight, swatch;
     public final float thirdPersonScale, guiScale;
@@ -91,6 +100,20 @@ public final class GeoModel {
                 ts.get(0).getAsInt(), ts.get(1).getAsInt(), root.get("swatch").getAsInt(),
                 root.has("third_person_scale") ? root.get("third_person_scale").getAsFloat() : 0.6f,
                 root.has("gui_scale") ? root.get("gui_scale").getAsFloat() : 0.42f);
+        if (root.has("shell")) {
+            JsonObject sh = root.getAsJsonObject("shell");
+            ShellInfo si = new ShellInfo();
+            Vector3f size = vec(sh, "size", 0.5f);
+            si.sx = size.x; si.sy = size.y; si.sz = size.z;
+            si.swatch = sh.get("swatch").getAsInt();
+            si.swatchEnd = sh.has("swatch_end") ? sh.get("swatch_end").getAsInt() : si.swatch;
+            if (sh.has("velocity")) si.velocity.set(vec(sh, "velocity", 0));
+            if (sh.has("random")) si.random.set(vec(sh, "random", 0));
+            if (sh.has("spin")) si.spin.set(vec(sh, "spin", 0));
+            if (sh.has("gravity")) si.gravity = sh.get("gravity").getAsFloat();
+            if (sh.has("life")) si.life = sh.get("life").getAsFloat();
+            m.shell = si;
+        }
         JsonArray bones = root.getAsJsonArray("bones");
         for (JsonElement e : bones) {
             JsonObject b = e.getAsJsonObject();

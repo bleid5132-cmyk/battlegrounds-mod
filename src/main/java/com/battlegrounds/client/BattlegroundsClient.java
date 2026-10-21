@@ -1,6 +1,8 @@
 package com.battlegrounds.client;
 
 import com.battlegrounds.client.anim.BodyAnimator;
+import com.battlegrounds.client.fx.Shells;
+import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
 import com.battlegrounds.client.geo.GeoAssets;
 import com.battlegrounds.client.render.GunRenderer;
 import com.battlegrounds.client.screen.AttachmentScreen;
@@ -32,6 +34,7 @@ public class BattlegroundsClient implements ClientModInitializer {
     public static KeyBinding CROUCH;
     public static KeyBinding PRONE;
     public static KeyBinding ATTACHMENTS;
+    public static KeyBinding INSPECT;
 
     @Override
     public void onInitializeClient() {
@@ -40,8 +43,11 @@ public class BattlegroundsClient implements ClientModInitializer {
         CROUCH = register("crouch", GLFW.GLFW_KEY_C);
         PRONE = register("prone", GLFW.GLFW_KEY_Z);
         ATTACHMENTS = register("attachments", GLFW.GLFW_KEY_G);
+        INSPECT = register("inspect", GLFW.GLFW_KEY_F);
 
         ClientTickEvents.END_CLIENT_TICK.register(ClientController::tick);
+        ClientTickEvents.END_CLIENT_TICK.register(mc -> Shells.tickWorld());
+        WorldRenderEvents.AFTER_ENTITIES.register(Shells::renderWorld);
         HudRenderCallback.EVENT.register(Hud::render);
         HandledScreens.register(ModScreens.ATTACHMENTS, AttachmentScreen::new);
 

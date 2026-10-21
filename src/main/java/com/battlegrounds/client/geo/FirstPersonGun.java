@@ -1,6 +1,7 @@
 package com.battlegrounds.client.geo;
 
 import com.battlegrounds.client.ClientController;
+import com.battlegrounds.client.fx.Shells;
 import com.battlegrounds.client.render.GeoGunItemRenderer;
 import com.battlegrounds.item.GunItem;
 import com.battlegrounds.weapon.AttachmentSlot;
@@ -116,6 +117,7 @@ public final class FirstPersonGun {
     }
 
     public static void onEquip(ItemStack stack) {
+        Shells.clearFirstPerson();
         if (!handles(stack)) {
             modelId = null;
             return;
@@ -140,8 +142,26 @@ public final class FirstPersonGun {
         GeoAnimation s = entry(stack).anim("shoot");
         if (s != null) SHOOT.restart(s, 1f);
         shootTime = System.currentTimeMillis();
+        stopInspect();
+        Shells.spawnFirstPerson(((GunItem) stack.getItem()).stats.id());
         shootSwayX = (RANDOM.nextFloat() * 2f - 1f) * 0.2f;
         shootSwayYaw = (RANDOM.nextFloat() * 2f - 1f) * 0.78f;
+    }
+
+    /** Осмотр оружия (клавиша F), как в CS2. Не во время перезарядки и доставания. */
+    public static void inspect(ItemStack stack) {
+        if (!handles(stack) || GunItem.isReloading(stack)) return;
+        if (MAIN.cur != null && !MAIN.finished() && !isInspecting()) return;
+        GeoAnimation a = entry(stack).anim("inspect");
+        if (a != null) MAIN.restart(a, 1f);
+    }
+
+    public static boolean isInspecting() {
+        return MAIN.cur != null && "inspect".equals(MAIN.cur.name) && !MAIN.finished();
+    }
+
+    private static void stopInspect() {
+        if (isInspecting()) MAIN.stop(0.2f);
     }
 
     private static GeoAssets.Entry entry(ItemStack stack) {
@@ -201,6 +221,7 @@ public final class FirstPersonGun {
 
         // прицеливание
         boolean aiming = ClientController.isAiming();
+        if (isInspecting() && (aiming || player.isSprinting())) stopInspect();
         if (aiming && !wasAiming && e.anim("ads_up") != null) ADS.restart(e.anim("ads_up"), 1f);
         wasAiming = aiming;
         aimValue = MathHelper.clamp(AIM.update(ClientController.getAimProgress(tickDelta)), 0f, 1.05f);
@@ -345,12 +366,15 @@ public final class FirstPersonGun {
         GeoRenderer.render(model, pose, matrices, vcp, light, GeoRenderer.defaultOverlay(), hidden,
                 (bone, m) -> {
                     switch (bone.name) {
+                        case "shell_pos" -> Shells.capturePort(new org.joml.Matrix4f(m.peek().getPositionMatrix()));
                         case "righthand" -> arm(player, true, m, vcp, light);
                         case "lefthand" -> arm(player, false, m, vcp, light);
                         default -> GeoGunItemRenderer.attachmentAt(stack, bone.name, m, vcp, light);
                     }
                 });
         matrices.pop();
+        // гильзы летят в пространстве камеры, отдельно от оружия
+        Shells.renderFirstPerson(matrices, vcp, light);
     }
 
     /** Точка глаза при прицеливании: мушка/целик или установленный прицел. */

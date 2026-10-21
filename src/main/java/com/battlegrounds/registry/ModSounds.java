@@ -16,6 +16,7 @@ public final class ModSounds {
     public static final SoundEvent FIRE_MODE = register("fire_mode");
     public static final SoundEvent BULLET_IMPACT = register("bullet_impact");
     public static final SoundEvent ATTACH = register("attach");
+    public static final SoundEvent SHELL_DROP = register("shell_drop");
 
     public static SoundEvent shotFor(AmmoType ammo, boolean suppressed) {
         if (suppressed) return SHOT_SUPPRESSED;

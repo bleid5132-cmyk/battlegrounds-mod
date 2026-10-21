@@ -91,7 +91,14 @@ public class BodyAnimator implements IAnimation {
         kick[1] *= 0.45f;
         if (holdingGun) {
             int ammo = GunItem.getAmmo(stack);
-            if (lastAmmo >= 0 && ammo < lastAmmo) kick[1] = 1f;
+            if (lastAmmo >= 0 && ammo < lastAmmo) {
+                kick[1] = 1f;
+                boolean ownFirstPerson = p == net.minecraft.client.MinecraftClient.getInstance().player
+                        && net.minecraft.client.MinecraftClient.getInstance().options.getPerspective().isFirstPerson();
+                if (!ownFirstPerson) {
+                    com.battlegrounds.client.fx.Shells.spawnWorld(p, ((GunItem) stack.getItem()).stats.id());
+                }
+            }
             lastAmmo = ammo;
         } else {
             lastAmmo = -1;

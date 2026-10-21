@@ -20,6 +20,8 @@ public abstract class MinecraftClientMixin {
             }
             while (self.options.inventoryKey.wasPressed()) {
             }
+            while (self.options.swapHandsKey.wasPressed()) {
+            }
         }
     }
 

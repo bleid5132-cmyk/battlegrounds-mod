@@ -51,5 +51,13 @@
     "sounds": [
       "battlegrounds:attach"
     ]
+  },
+  "shell_drop": {
+    "sounds": [
+      {
+        "name": "battlegrounds:shell_drop",
+        "attenuation_distance": 12
+      }
+    ]
   }
 }

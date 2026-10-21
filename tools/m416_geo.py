@@ -529,6 +529,7 @@ bone('muzzle_pos', G, pivot=(0, BORE, -20.5))
 bone('scope_pos', G, pivot=(0, 12.1, 0.6))
 bone('grip_pos', G, pivot=(0, 6.95, -10.3))
 bone('stock_pos', G, pivot=(0, 8.9, 7.2))
+bone('shell_pos', G, pivot=(1.15, 9.72, 1.9))             # окно выброса гильз
 bone('camera', pivot=(0, 13.4, 16.0))
 bone('idle_view', pivot=(-3.25, 13.4, 16.1))
 bone('iron_view', pivot=(0, 13.3, 14.6))
@@ -632,6 +633,10 @@ data = {
     'swatch': 8,
     'third_person_scale': 0.6,
     'gui_scale': 0.42,
+    # гильза 5.56: размер (px), цвет корпуса и донца; вылет в системе оружия (px/с), как у TACZ
+    'shell': {'size': [0.42, 0.42, 1.75], 'swatch': SLOT['brass'], 'swatch_end': SLOT['brass_d'],
+              'velocity': [70, 28, 10], 'random': [15, 15, 4], 'gravity': -160,
+              'spin': [360, -1200, 90], 'life': 1.0},
     'bones': bones,
 }
 os.makedirs(os.path.join(ROOT, 'geo'), exist_ok=True)

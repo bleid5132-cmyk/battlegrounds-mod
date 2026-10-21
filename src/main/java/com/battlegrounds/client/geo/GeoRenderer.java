@@ -122,6 +122,14 @@ public final class GeoRenderer {
         vc.vertex(pos, x, y, z).color(1f, 1f, 1f, 1f).texture(u, v).overlay(overlay).light(light).normal(nrm, nx, ny, nz).next();
     }
 
+    /** Один куб с цветом из ячейки текстуры модели (для гильз). */
+    public static void drawBox(GeoModel model, MatrixStack matrices, VertexConsumer vc, float x0, float y0, float z0,
+                               float x1, float y1, float z1, int swatch, int light) {
+        MatrixStack.Entry e = matrices.peek();
+        cube(model, new GeoModel.Cube(x0, y0, z0, x1, y1, z1, swatch), e.getPositionMatrix(), e.getNormalMatrix(),
+                vc, light, OverlayTexture.DEFAULT_UV);
+    }
+
     public static int defaultOverlay() {
         return OverlayTexture.DEFAULT_UV;
     }
