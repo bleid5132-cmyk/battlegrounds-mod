@@ -143,6 +143,8 @@ public final class FirstPersonGun {
         if (s != null) SHOOT.restart(s, 1f);
         shootTime = System.currentTimeMillis();
         Shells.spawnFirstPerson(((GunItem) stack.getItem()).stats.id());
+        Attachments.Mods fm = Attachments.compute(stack, ((GunItem) stack.getItem()).stats);
+        com.battlegrounds.client.fx.ShotFx.firstPersonFlash(fm.suppressed(), fm.flashHidden());
         shootSwayX = (RANDOM.nextFloat() * 2f - 1f) * 0.2f;
         shootSwayYaw = (RANDOM.nextFloat() * 2f - 1f) * 0.78f;
     }
@@ -349,12 +351,18 @@ public final class FirstPersonGun {
                 (bone, m) -> {
                     switch (bone.name) {
                         case "shell_pos" -> Shells.capturePort(new org.joml.Matrix4f(m.peek().getPositionMatrix()));
+                        case "muzzle_pos" -> {
+                            com.battlegrounds.client.fx.ShotFx.captureMuzzle(new org.joml.Matrix4f(m.peek().getPositionMatrix()));
+                            GeoGunItemRenderer.attachmentAt(stack, bone.name, m, vcp, light);
+                        }
                         case "righthand" -> arm(player, true, m, vcp, light);
                         case "lefthand" -> arm(player, false, m, vcp, light);
                         default -> GeoGunItemRenderer.attachmentAt(stack, bone.name, m, vcp, light);
                     }
                 });
         matrices.pop();
+        // дульная вспышка: без насадки — на срезе штатного пламегасителя, с насадкой — дальше
+        com.battlegrounds.client.fx.ShotFx.renderFirstPersonFlash(vcp, hidden.contains("muzzle_default") ? 4.5f : 2.7f);
         // гильзы летят в пространстве камеры, отдельно от оружия
         Shells.renderFirstPerson(matrices, vcp, light);
     }

@@ -12,6 +12,8 @@ public final class Packets {
     public static final Identifier MANTLE = Battlegrounds.id("mantle");
     public static final Identifier AIM = Battlegrounds.id("aim");
     public static final Identifier OPEN_ATTACHMENTS = Battlegrounds.id("open_attachments");
+    /** Сервер → клиенты: эффекты выстрела (трассер, вспышка, попадание). */
+    public static final Identifier SHOT_FX = Battlegrounds.id("shot_fx");
 
     private Packets() {
     }

@@ -46,6 +46,22 @@ public class BattlegroundsClient implements ClientModInitializer {
         ClientTickEvents.END_CLIENT_TICK.register(ClientController::tick);
         ClientTickEvents.END_CLIENT_TICK.register(mc -> Shells.tickWorld());
         WorldRenderEvents.AFTER_ENTITIES.register(Shells::renderWorld);
+        // эффекты выстрела: пакет от сервера → вспышка, трассер, попадание
+        ClientTickEvents.END_CLIENT_TICK.register(mc -> com.battlegrounds.client.fx.ShotFx.tick());
+        WorldRenderEvents.AFTER_ENTITIES.register(com.battlegrounds.client.fx.ShotFx::renderWorld);
+        net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.registerGlobalReceiver(
+                com.battlegrounds.network.Packets.SHOT_FX, (client, handler, buf, sender) -> {
+                    int shooter = buf.readVarInt();
+                    net.minecraft.util.math.Vec3d origin = new net.minecraft.util.math.Vec3d(buf.readDouble(), buf.readDouble(), buf.readDouble());
+                    net.minecraft.util.math.Vec3d hit = new net.minecraft.util.math.Vec3d(buf.readDouble(), buf.readDouble(), buf.readDouble());
+                    int type = buf.readByte();
+                    int face = buf.readByte();
+                    int state = buf.readVarInt();
+                    boolean suppressed = buf.readBoolean();
+                    boolean flashHidden = buf.readBoolean();
+                    client.execute(() -> com.battlegrounds.client.fx.ShotFx.onShot(shooter, origin, hit, type, face, state,
+                            suppressed, flashHidden));
+                });
         HudRenderCallback.EVENT.register(Hud::render);
         HandledScreens.register(ModScreens.ATTACHMENTS, AttachmentScreen::new);
 

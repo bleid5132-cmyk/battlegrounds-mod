@@ -102,29 +102,38 @@ public final class GunLogic {
         // звук и вспышка
         world.playSound(null, player.getX(), player.getEyeY(), player.getZ(), ModSounds.shotFor(s.ammo(), mods.suppressed()),
                 SoundCategory.PLAYERS, mods.suppressed() ? 1.2f : 4.0f, s.soundPitch() * (0.95f + rnd.nextFloat() * 0.1f));
-        Vec3d muzzle = origin.add(dir.multiply(1.0)).add(aiming ? Vec3d.ZERO : right.multiply(0.25)).add(0, aiming ? -0.05 : -0.15, 0);
-        if (!mods.flashHidden()) {
-            world.spawnParticles(ParticleTypes.SMALL_FLAME, muzzle.x, muzzle.y, muzzle.z, 2, 0.02, 0.02, 0.02, 0.0);
-        }
-        world.spawnParticles(ParticleTypes.SMOKE, muzzle.x, muzzle.y, muzzle.z, 1, 0.02, 0.02, 0.02, 0.01);
-
         Vec3d hitPos;
+        int hitType = 0, face = 0, stateId = 0;
         if (entityHit != null) {
             hitPos = entityHit.getPos();
+            hitType = 2;
             hitEntity(player, gun, entityHit.getEntity(), hitPos);
         } else if (blockHit.getType() != HitResult.Type.MISS) {
             hitPos = blockHit.getPos();
+            hitType = 1;
+            face = blockHit.getSide().getId();
+            stateId = net.minecraft.block.Block.getRawIdFromState(world.getBlockState(blockHit.getBlockPos()));
             hitBlock(player, world, blockHit);
         } else {
             hitPos = end;
         }
 
-        // трассер (с глушителем не виден)
-        if (mods.suppressed()) return;
-        double dist = origin.distanceTo(hitPos);
-        for (double d = 3.0; d < Math.min(dist, 60.0); d += 2.5) {
-            Vec3d p = origin.add(dir.multiply(d));
-            world.spawnParticles(ParticleTypes.CRIT, p.x, p.y, p.z, 1, 0, 0, 0, 0);
+        // эффекты (вспышка, трассер, попадание) рисуют клиенты
+        net.minecraft.network.PacketByteBuf buf = net.fabricmc.fabric.api.networking.v1.PacketByteBufs.create();
+        buf.writeVarInt(player.getId());
+        buf.writeDouble(origin.x); buf.writeDouble(origin.y); buf.writeDouble(origin.z);
+        buf.writeDouble(hitPos.x); buf.writeDouble(hitPos.y); buf.writeDouble(hitPos.z);
+        buf.writeByte(hitType);
+        buf.writeByte(face);
+        buf.writeVarInt(stateId);
+        buf.writeBoolean(mods.suppressed());
+        buf.writeBoolean(mods.flashHidden());
+        java.util.Set<ServerPlayerEntity> to = new java.util.HashSet<>(net.fabricmc.fabric.api.networking.v1.PlayerLookup.tracking(player));
+        to.addAll(net.fabricmc.fabric.api.networking.v1.PlayerLookup.around(world, hitPos, 64));
+        to.add(player);
+        for (ServerPlayerEntity p : to) {
+            net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(p, com.battlegrounds.network.Packets.SHOT_FX,
+                    net.fabricmc.fabric.api.networking.v1.PacketByteBufs.copy(buf));
         }
     }
 
@@ -150,8 +159,6 @@ public final class GunLogic {
         if (target instanceof LivingEntity living) {
             living.timeUntilRegen = 0;
         }
-        player.getServerWorld().spawnParticles(new BlockStateParticleEffect(ParticleTypes.BLOCK, Blocks.REDSTONE_BLOCK.getDefaultState()),
-                hitPos.x, hitPos.y, hitPos.z, 8, 0.1, 0.1, 0.1, 0.1);
     }
 
     private static void hitBlock(ServerPlayerEntity player, ServerWorld world, BlockHitResult hit) {
@@ -163,8 +170,6 @@ public final class GunLogic {
             world.breakBlock(pos, false, player);
             return;
         }
-        world.spawnParticles(new BlockStateParticleEffect(ParticleTypes.BLOCK, state), p.x, p.y, p.z, 6, 0.05, 0.05, 0.05, 0.1);
-        world.spawnParticles(ParticleTypes.SMOKE, p.x, p.y, p.z, 2, 0.02, 0.02, 0.02, 0.01);
         world.playSound(null, p.x, p.y, p.z, ModSounds.BULLET_IMPACT, SoundCategory.BLOCKS, 0.6f, 0.9f + world.random.nextFloat() * 0.2f);
     }
 
