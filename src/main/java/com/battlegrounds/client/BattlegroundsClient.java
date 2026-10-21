@@ -60,8 +60,10 @@ public class BattlegroundsClient implements ClientModInitializer {
                     boolean suppressed = buf.readBoolean();
                     boolean flashHidden = buf.readBoolean();
                     boolean heavy = buf.readByte() == 1;
+                    net.minecraft.util.math.Vec3d water = buf.readBoolean()
+                            ? new net.minecraft.util.math.Vec3d(buf.readDouble(), buf.readDouble(), buf.readDouble()) : null;
                     client.execute(() -> com.battlegrounds.client.fx.ShotFx.onShot(shooter, origin, hit, type, face, state,
-                            suppressed, flashHidden, heavy));
+                            suppressed, flashHidden, heavy, water));
                 });
         HudRenderCallback.EVENT.register(Hud::render);
         HandledScreens.register(ModScreens.ATTACHMENTS, AttachmentScreen::new);

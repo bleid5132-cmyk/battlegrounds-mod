@@ -101,6 +101,11 @@ public final class FirstPersonGun {
     private enum Run { NONE, START, LOOP, END }
 
     private static Run run = Run.NONE;
+
+    /** Оружие ещё опущено после бега (бег или первая половина выхода из него). */
+    public static boolean runBlocksFire() {
+        return run == Run.START || run == Run.LOOP || (run == Run.END && BASE.cur != null && BASE.t < BASE.cur.length * 0.45f);
+    }
     private static String modelId;
     private static GeoPose pose;
     private static long lastFrame = -1;

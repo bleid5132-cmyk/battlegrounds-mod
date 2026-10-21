@@ -159,7 +159,10 @@ public final class ClientController {
         }
 
         // ---------- стрельба ----------
-        boolean attackDown = gun != null && inGame && mc.options.attackKey.isPressed() && !Mantle.isActive() && equipTicks > readyTicks;
+        // на бегу не стреляем: оружие опущено, пока не закончится выход из бега
+        boolean running = p.isSprinting() || FirstPersonGun.runBlocksFire();
+        boolean attackDown = gun != null && inGame && mc.options.attackKey.isPressed() && !Mantle.isActive() && equipTicks > readyTicks
+                && !running;
         if (gun != null) {
             FireMode mode = gun.getFireMode(stack);
             boolean newPress = attackDown && !wasAttackDown;

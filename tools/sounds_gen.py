@@ -331,6 +331,23 @@ def reload_full():
     return finish(x, 0.9)
 
 
+def bullet_water():
+    """Пуля входит в воду: резкий шлепок, шипящий всплеск, булькающие пузыри и падающие капли."""
+    x = silence(0.9)
+    place(x, mix(thud(420, 0.05, 0.004) * 0.6, hp(noise(0.01), 1500) * env_exp(0.01, 0.0015) * 0.9), 0.0)   # удар о поверхность
+    place(x, bp(noise(0.35), 1500, 9000) * env_exp(0.35, 0.07, 0.004) * 0.55, 0.002)                        # шипящий всплеск
+    for _ in range(9):                                                                                      # пузыри: короткие восходящие «чирпы»
+        d = rng.uniform(0.012, 0.03)
+        t = T(d)
+        f0 = rng.uniform(500, 1400)
+        b = np.sin(2 * np.pi * f0 * t * (1 + 1.8 * t / d)) * np.exp(-t / (d * 0.35)) * np.sin(np.pi * t / d) ** 0.3
+        place(x, b * rng.uniform(0.15, 0.4), rng.uniform(0.01, 0.12))
+    for _ in range(14):                                                                                     # капли падают обратно
+        place(x, mix(click(rng.uniform(1800, 3600), 0.02, bright=0.6, damp=2.5) * 0.06,
+                     bp(noise(0.02), 2000, 8000) * env_exp(0.02, 0.003) * 0.12), rng.uniform(0.18, 0.6))
+    return finish(reverb_tail(x, 0.4, 0.5, 0.15, 0.2), 0.85)
+
+
 # ------------------------------------------------------------------ запись
 def write_ogg(name, x):
     os.makedirs(OUT, exist_ok=True)
@@ -368,6 +385,8 @@ SOUNDS['aim_out'] = aim_out()
 SOUNDS['dry_fire'] = dry_fire()
 SOUNDS['fire_mode'] = fire_mode()
 SOUNDS['reload'] = reload_full()
+for i in range(3):
+    SOUNDS[f'bullet_water_{i + 1}'] = bullet_water()
 
 if __name__ == '__main__':
     import sys

@@ -29,6 +29,7 @@ public final class ModSounds {
     public static final SoundEvent GUN_HOLSTER = register("gun_holster");
     public static final SoundEvent AIM_IN = register("aim_in");
     public static final SoundEvent AIM_OUT = register("aim_out");
+    public static final SoundEvent BULLET_WATER = register("bullet_water");
 
     public static SoundEvent shotFor(AmmoType ammo, boolean suppressed) {
         if (suppressed) return SHOT_SUPPRESSED;

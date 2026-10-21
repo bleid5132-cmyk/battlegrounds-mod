@@ -62,6 +62,7 @@ public final class GunLogic {
         long now = world.getTime();
 
         if (GunItem.isReloading(stack) || BgPlayer.of(player).bg$isMantling()) return;
+        if (player.isSprinting()) return;                    // на бегу стрелять нельзя
         if (!takeShot(player, s, now)) return;
         Attachments.Mods mods = Attachments.compute(stack, s);
 
@@ -90,6 +91,20 @@ public final class GunLogic {
         Vec3d origin = player.getEyePos().add(right.multiply(bg.bg$getLean() * 0.45));
         Vec3d end = origin.add(dir.multiply(s.range()));
 
+        // вода: пуля входит в воду и почти сразу теряет энергию (5.56 — около 1.5 м, 7.62 — около 2 м)
+        double waterRun = s.ammo() == com.battlegrounds.weapon.AmmoType.A762 ? 2.0 : 1.5;
+        Vec3d surface = null;
+        if (world.getFluidState(BlockPos.ofFloored(origin)).isIn(net.minecraft.registry.tag.FluidTags.WATER)) {
+            end = origin.add(dir.multiply(waterRun));
+        } else {
+            BlockHitResult wh = world.raycast(new RaycastContext(origin, end,
+                    RaycastContext.ShapeType.COLLIDER, RaycastContext.FluidHandling.WATER, player));
+            if (wh.getType() != HitResult.Type.MISS && world.getFluidState(wh.getBlockPos()).isIn(net.minecraft.registry.tag.FluidTags.WATER)) {
+                surface = wh.getPos();
+                end = surface.add(dir.multiply(waterRun));
+            }
+        }
+
         BlockHitResult blockHit = world.raycast(new RaycastContext(origin, end,
                 RaycastContext.ShapeType.COLLIDER, RaycastContext.FluidHandling.NONE, player));
         Vec3d blockEnd = blockHit.getType() == HitResult.Type.MISS ? end : blockHit.getPos();
@@ -104,7 +119,9 @@ public final class GunLogic {
         if (entityHit != null) {
             hitPos = entityHit.getPos();
             hitType = 2;
-            hitEntity(player, gun, entityHit.getEntity(), hitPos);
+            // под водой пуля уже потеряла часть энергии
+            boolean underwater = surface != null && origin.squaredDistanceTo(hitPos) > origin.squaredDistanceTo(surface);
+            hitEntity(player, gun, entityHit.getEntity(), hitPos, underwater ? 0.5f : 1f);
         } else if (blockHit.getType() != HitResult.Type.MISS) {
             hitPos = blockHit.getPos();
             hitType = 1;
@@ -113,6 +130,7 @@ public final class GunLogic {
             hitBlock(player, world, blockHit);
         } else {
             hitPos = end;
+            if (surface != null) hitType = 3;                // пуля остановилась в толще воды
         }
 
         // эффекты (вспышка, трассер, попадание) рисуют клиенты
@@ -126,6 +144,10 @@ public final class GunLogic {
         buf.writeBoolean(mods.suppressed());
         buf.writeBoolean(mods.flashHidden());
         buf.writeByte(s.ammo() == com.battlegrounds.weapon.AmmoType.A762 ? 1 : 0);
+        buf.writeBoolean(surface != null);
+        if (surface != null) {
+            buf.writeDouble(surface.x); buf.writeDouble(surface.y); buf.writeDouble(surface.z);
+        }
         java.util.Set<ServerPlayerEntity> to = new java.util.HashSet<>(net.fabricmc.fabric.api.networking.v1.PlayerLookup.tracking(player));
         to.addAll(net.fabricmc.fabric.api.networking.v1.PlayerLookup.around(world, hitPos, 64));
         to.addAll(net.fabricmc.fabric.api.networking.v1.PlayerLookup.around(world, origin, 256));   // выстрел слышно далеко
@@ -136,9 +158,9 @@ public final class GunLogic {
         }
     }
 
-    private static void hitEntity(ServerPlayerEntity player, GunItem gun, Entity target, Vec3d hitPos) {
+    private static void hitEntity(ServerPlayerEntity player, GunItem gun, Entity target, Vec3d hitPos, float mul) {
         GunStats s = gun.stats;
-        float damage = s.damage();
+        float damage = s.damage() * mul;
         if (target instanceof LivingEntity living) {
             double rel = (hitPos.y - living.getY()) / Math.max(0.1, living.getHeight());
             double eyeRel = living.getStandingEyeHeight() / Math.max(0.1, living.getHeight());

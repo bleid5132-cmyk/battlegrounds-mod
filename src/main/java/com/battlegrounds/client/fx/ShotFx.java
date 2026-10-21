@@ -133,7 +133,7 @@ public final class ShotFx {
     private static long lastNanos = -1;
 
     public static void onShot(int shooterId, Vec3d origin, Vec3d hit, int type, int faceId, int stateId,
-                              boolean suppressed, boolean flashHidden, boolean heavy) {
+                              boolean suppressed, boolean flashHidden, boolean heavy, Vec3d water) {
         MinecraftClient mc = MinecraftClient.getInstance();
         ClientWorld world = mc.world;
         if (world == null) return;
@@ -162,11 +162,12 @@ public final class ShotFx {
         // трассер
         if (!suppressed) {
             Vec3d from = localFp ? muzzle : muzzle.add(dir.multiply(0.6));
-            double total = from.distanceTo(hit);
+            Vec3d tracerEnd = water != null ? water : hit;            // в воде трассер гаснет у поверхности
+            double total = from.distanceTo(tracerEnd);
             if (total > 1.0) {
                 Streak s = new Streak();
                 s.from = from;
-                s.to = hit;
+                s.to = tracerEnd;
                 s.total = total;
                 s.speed = 260 + RND.nextDouble() * 40;
                 s.length = Math.min(7.0, total * 0.6);
@@ -177,6 +178,11 @@ public final class ShotFx {
             }
         }
         // попадание
+        if (water != null) {
+            WaterFx.impact(world, water, dir, hit, heavy);
+            if (type == HIT_ENTITY) impactEntity(world, hit, dir);
+            return;                                                // под водой пыли, искр и дырок нет
+        }
         if (type == HIT_BLOCK) impactBlock(world, hit, Direction.byId(faceId), Block.getStateFromRawId(stateId), dir);
         else if (type == HIT_ENTITY) impactEntity(world, hit, dir);
     }
@@ -296,6 +302,7 @@ public final class ShotFx {
 
     public static void renderWorld(WorldRenderContext ctx) {
         GunSounds.update();
+        WaterFx.render(ctx);
         VertexConsumerProvider vcp = ctx.consumers();
         ClientWorld world = MinecraftClient.getInstance().world;
         if (vcp == null || world == null) return;
