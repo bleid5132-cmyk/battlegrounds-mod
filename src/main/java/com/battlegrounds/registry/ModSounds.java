@@ -17,6 +17,18 @@ public final class ModSounds {
     public static final SoundEvent BULLET_IMPACT = register("bullet_impact");
     public static final SoundEvent ATTACH = register("attach");
     public static final SoundEvent SHELL_DROP = register("shell_drop");
+    public static final SoundEvent SHOT_FAR = register("shot_far");
+    public static final SoundEvent SHOT_FAR_762 = register("shot_far_762");
+    public static final SoundEvent MAG_OUT = register("mag_out");
+    public static final SoundEvent MAG_IN = register("mag_in");
+    public static final SoundEvent MAG_TAP = register("mag_tap");
+    public static final SoundEvent CHARGE_PULL = register("charge_pull");
+    public static final SoundEvent CHARGE_RELEASE = register("charge_release");
+    public static final SoundEvent GUN_RATTLE = register("gun_rattle");
+    public static final SoundEvent GUN_DRAW = register("gun_draw");
+    public static final SoundEvent GUN_HOLSTER = register("gun_holster");
+    public static final SoundEvent AIM_IN = register("aim_in");
+    public static final SoundEvent AIM_OUT = register("aim_out");
 
     public static SoundEvent shotFor(AmmoType ammo, boolean suppressed) {
         if (suppressed) return SHOT_SUPPRESSED;

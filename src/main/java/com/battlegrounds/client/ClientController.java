@@ -15,6 +15,7 @@ import org.jetbrains.annotations.Nullable;
 
 /** Вся клиентская логика: стрельба, прицеливание, отдача, стойки, наклоны. */
 public final class ClientController {
+    private static boolean wasReloadingTp;
     private static boolean aiming;
     private static float aimProgress, prevAimProgress;
     private static Perspective savedPerspective;
@@ -67,6 +68,14 @@ public final class ClientController {
         if (equipTicks < 100) equipTicks++;
 
         // ---------- клавиши оружия ----------
+        // от третьего лица (и у оружия без своих анимаций) кадров со звуками нет — играем перезарядку целиком
+        boolean reloadingNow = gun != null && GunItem.isReloading(stack);
+        boolean framed = mc.options.getPerspective().isFirstPerson() && FirstPersonGun.handles(stack);
+        if (reloadingNow && !wasReloadingTp && !framed && mc.world != null) {
+            mc.world.playSound(mc.player.getX(), mc.player.getY(), mc.player.getZ(), com.battlegrounds.registry.ModSounds.RELOAD,
+                    net.minecraft.sound.SoundCategory.PLAYERS, 1.0f, 1.0f, false);
+        }
+        wasReloadingTp = reloadingNow;
         while (BattlegroundsClient.RELOAD.wasPressed()) {
             if (gun != null) ClientNet.reload();
         }

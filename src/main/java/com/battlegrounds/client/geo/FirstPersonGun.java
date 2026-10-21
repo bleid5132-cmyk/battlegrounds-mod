@@ -33,6 +33,7 @@ public final class FirstPersonGun {
     static final class Track {
         GeoAnimation cur, prev;
         float t, prevT, speed = 1f, fade = 1f, fadeTime = 0.2f;
+        int nextSound;
 
         void play(@Nullable GeoAnimation a, float fadeSeconds, float speed) {
             if (a == cur) { this.speed = speed; return; }
@@ -40,6 +41,7 @@ public final class FirstPersonGun {
             prevT = t;
             cur = a;
             t = 0f;
+            nextSound = 0;
             this.speed = speed;
             fadeTime = fadeSeconds;
             fade = fadeSeconds <= 0f || prev == null ? 1f : 0f;
@@ -49,6 +51,7 @@ public final class FirstPersonGun {
             prev = null;
             cur = a;
             t = 0f;
+            nextSound = 0;
             fade = 1f;
             this.speed = speed;
         }
@@ -66,6 +69,11 @@ public final class FirstPersonGun {
                 t += dt * speed;
                 if (cur.loop && cur.length > 0) t %= cur.length;
                 else t = Math.min(t, cur.length);
+                // звуки по ходу анимации (затвор, магазин, ремень)
+                while (!cur.loop && nextSound < cur.soundTimes.length && cur.soundTimes[nextSound] <= t) {
+                    com.battlegrounds.client.fx.GunSounds.play(cur.soundNames[nextSound]);
+                    nextSound++;
+                }
             }
             if (prev != null) {
                 prevT += dt * speed;
@@ -207,6 +215,7 @@ public final class FirstPersonGun {
         // прицеливание
         boolean aiming = ClientController.isAiming();
         if (aiming && !wasAiming && e.anim("ads_up") != null) ADS.restart(e.anim("ads_up"), 1f);
+        if (!aiming && wasAiming) com.battlegrounds.client.fx.GunSounds.play("aim_out");
         wasAiming = aiming;
         aimValue = MathHelper.clamp(AIM.update(ClientController.getAimProgress(tickDelta)), 0f, 1.05f);
 

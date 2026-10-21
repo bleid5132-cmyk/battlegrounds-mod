@@ -59,8 +59,9 @@ public class BattlegroundsClient implements ClientModInitializer {
                     int state = buf.readVarInt();
                     boolean suppressed = buf.readBoolean();
                     boolean flashHidden = buf.readBoolean();
+                    boolean heavy = buf.readByte() == 1;
                     client.execute(() -> com.battlegrounds.client.fx.ShotFx.onShot(shooter, origin, hit, type, face, state,
-                            suppressed, flashHidden));
+                            suppressed, flashHidden, heavy));
                 });
         HudRenderCallback.EVENT.register(Hud::render);
         HandledScreens.register(ModScreens.ATTACHMENTS, AttachmentScreen::new);

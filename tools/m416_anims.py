@@ -190,6 +190,15 @@ def reload(empty):
 A['reload_tactical'] = reload(False)
 A['reload_empty'] = reload(True)
 
+# ------------------------------------------------------------------ звуки по кадрам (время в секундах анимации)
+# у каждого звука внутри файла своя раскладка: защёлка магазина — через 0.13 с, упор рамы — через 0.18 с и т.д.
+A['draw']['sounds'] = [[0.0, 'gun_draw']]
+A['put_away']['sounds'] = [[0.0, 'gun_holster']]
+A['ads_up']['sounds'] = [[0.0, 'aim_in']]
+_rel = [[0.04, 'mag_out'], [0.91, 'mag_in'], [1.14, 'mag_tap'], [1.62, 'gun_rattle']]
+A['reload_tactical']['sounds'] = _rel
+A['reload_empty']['sounds'] = _rel[:3] + [[1.50, 'charge_pull'], [1.70, 'charge_release'], [2.2, 'gun_rattle']]
+
 os.makedirs(OUT, exist_ok=True)
 json.dump({'animations': A}, open(os.path.join(OUT, 'm416.json'), 'w'), separators=(',', ':'))
 if __name__ == '__main__':

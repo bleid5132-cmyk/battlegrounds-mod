@@ -1,55 +1,116 @@
 {
   "shot_556": {
-    "subtitle": "subtitles.battlegrounds.shot",
     "sounds": [
       {
-        "name": "battlegrounds:shot_556",
-        "attenuation_distance": 96
+        "name": "battlegrounds:shot_556_1",
+        "attenuation_distance": 64
+      },
+      {
+        "name": "battlegrounds:shot_556_2",
+        "attenuation_distance": 64
+      },
+      {
+        "name": "battlegrounds:shot_556_3",
+        "attenuation_distance": 64
       }
-    ]
+    ],
+    "subtitle": "subtitles.battlegrounds.shot"
   },
   "shot_762": {
-    "subtitle": "subtitles.battlegrounds.shot",
     "sounds": [
       {
-        "name": "battlegrounds:shot_762",
-        "attenuation_distance": 112
+        "name": "battlegrounds:shot_762_1",
+        "attenuation_distance": 64
+      },
+      {
+        "name": "battlegrounds:shot_762_2",
+        "attenuation_distance": 64
+      },
+      {
+        "name": "battlegrounds:shot_762_3",
+        "attenuation_distance": 64
       }
-    ]
+    ],
+    "subtitle": "subtitles.battlegrounds.shot"
   },
   "shot_suppressed": {
-    "subtitle": "subtitles.battlegrounds.shot_suppressed",
     "sounds": [
       {
-        "name": "battlegrounds:shot_suppressed",
-        "attenuation_distance": 24
+        "name": "battlegrounds:shot_suppressed_1",
+        "attenuation_distance": 40
+      },
+      {
+        "name": "battlegrounds:shot_suppressed_2",
+        "attenuation_distance": 40
+      },
+      {
+        "name": "battlegrounds:shot_suppressed_3",
+        "attenuation_distance": 40
       }
-    ]
+    ],
+    "subtitle": "subtitles.battlegrounds.shot_suppressed"
+  },
+  "shot_far": {
+    "sounds": [
+      {
+        "name": "battlegrounds:shot_far_1",
+        "attenuation_distance": 320
+      },
+      {
+        "name": "battlegrounds:shot_far_2",
+        "attenuation_distance": 320
+      }
+    ],
+    "subtitle": "subtitles.battlegrounds.shot"
+  },
+  "shot_far_762": {
+    "sounds": [
+      {
+        "name": "battlegrounds:shot_far_762_1",
+        "attenuation_distance": 320
+      },
+      {
+        "name": "battlegrounds:shot_far_762_2",
+        "attenuation_distance": 320
+      }
+    ],
+    "subtitle": "subtitles.battlegrounds.shot"
   },
   "reload": {
-    "subtitle": "subtitles.battlegrounds.reload",
     "sounds": [
-      "battlegrounds:reload"
-    ]
+      {
+        "name": "battlegrounds:reload",
+        "attenuation_distance": 24
+      }
+    ],
+    "subtitle": "subtitles.battlegrounds.reload"
   },
   "dry_fire": {
     "sounds": [
-      "battlegrounds:dry_fire"
+      {
+        "name": "battlegrounds:dry_fire"
+      }
     ]
   },
   "fire_mode": {
     "sounds": [
-      "battlegrounds:fire_mode"
+      {
+        "name": "battlegrounds:fire_mode"
+      }
     ]
   },
   "bullet_impact": {
     "sounds": [
-      "battlegrounds:bullet_impact"
+      {
+        "name": "battlegrounds:bullet_impact"
+      }
     ]
   },
   "attach": {
     "sounds": [
-      "battlegrounds:attach"
+      {
+        "name": "battlegrounds:attach"
+      }
     ]
   },
   "shell_drop": {
@@ -57,6 +118,100 @@
       {
         "name": "battlegrounds:shell_drop",
         "attenuation_distance": 12
+      }
+    ]
+  },
+  "mag_out": {
+    "sounds": [
+      {
+        "name": "battlegrounds:mag_out_1"
+      },
+      {
+        "name": "battlegrounds:mag_out_2"
+      }
+    ]
+  },
+  "mag_in": {
+    "sounds": [
+      {
+        "name": "battlegrounds:mag_in_1"
+      },
+      {
+        "name": "battlegrounds:mag_in_2"
+      }
+    ]
+  },
+  "mag_tap": {
+    "sounds": [
+      {
+        "name": "battlegrounds:mag_tap_1"
+      },
+      {
+        "name": "battlegrounds:mag_tap_2"
+      }
+    ]
+  },
+  "charge_pull": {
+    "sounds": [
+      {
+        "name": "battlegrounds:charge_pull_1"
+      },
+      {
+        "name": "battlegrounds:charge_pull_2"
+      }
+    ]
+  },
+  "charge_release": {
+    "sounds": [
+      {
+        "name": "battlegrounds:charge_release_1"
+      },
+      {
+        "name": "battlegrounds:charge_release_2"
+      }
+    ]
+  },
+  "gun_rattle": {
+    "sounds": [
+      {
+        "name": "battlegrounds:gun_rattle_1"
+      },
+      {
+        "name": "battlegrounds:gun_rattle_2"
+      }
+    ]
+  },
+  "gun_draw": {
+    "sounds": [
+      {
+        "name": "battlegrounds:gun_draw_1"
+      },
+      {
+        "name": "battlegrounds:gun_draw_2"
+      }
+    ]
+  },
+  "gun_holster": {
+    "sounds": [
+      {
+        "name": "battlegrounds:gun_holster"
+      }
+    ]
+  },
+  "aim_in": {
+    "sounds": [
+      {
+        "name": "battlegrounds:aim_in_1"
+      },
+      {
+        "name": "battlegrounds:aim_in_2"
+      }
+    ]
+  },
+  "aim_out": {
+    "sounds": [
+      {
+        "name": "battlegrounds:aim_out"
       }
     ]
   }

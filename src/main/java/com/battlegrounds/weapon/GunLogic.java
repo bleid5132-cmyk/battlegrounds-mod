@@ -99,9 +99,6 @@ public final class GunLogic {
                 e -> !e.isSpectator() && e.canHit() && e != player && !player.isConnectedThroughVehicle(e),
                 origin.squaredDistanceTo(blockEnd));
 
-        // звук и вспышка
-        world.playSound(null, player.getX(), player.getEyeY(), player.getZ(), ModSounds.shotFor(s.ammo(), mods.suppressed()),
-                SoundCategory.PLAYERS, mods.suppressed() ? 1.2f : 4.0f, s.soundPitch() * (0.95f + rnd.nextFloat() * 0.1f));
         Vec3d hitPos;
         int hitType = 0, face = 0, stateId = 0;
         if (entityHit != null) {
@@ -128,8 +125,10 @@ public final class GunLogic {
         buf.writeVarInt(stateId);
         buf.writeBoolean(mods.suppressed());
         buf.writeBoolean(mods.flashHidden());
+        buf.writeByte(s.ammo() == com.battlegrounds.weapon.AmmoType.A762 ? 1 : 0);
         java.util.Set<ServerPlayerEntity> to = new java.util.HashSet<>(net.fabricmc.fabric.api.networking.v1.PlayerLookup.tracking(player));
         to.addAll(net.fabricmc.fabric.api.networking.v1.PlayerLookup.around(world, hitPos, 64));
+        to.addAll(net.fabricmc.fabric.api.networking.v1.PlayerLookup.around(world, origin, 256));   // выстрел слышно далеко
         to.add(player);
         for (ServerPlayerEntity p : to) {
             net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.send(p, com.battlegrounds.network.Packets.SHOT_FX,
@@ -188,7 +187,8 @@ public final class GunLogic {
         long now = player.getWorld().getTime();
         stack.getOrCreateNbt().putLong(GunItem.RELOAD_START, now);
         stack.getOrCreateNbt().putLong(GunItem.RELOAD_END, now + Math.round(gun.stats.reloadTicks() * (GunItem.getAmmo(stack) == 0 ? 1.13f : 1f) * mods.reloadMul()));
-        player.getWorld().playSound(null, player.getX(), player.getY(), player.getZ(), ModSounds.RELOAD,
+        // остальные слышат перезарядку целиком; сам стрелок — по кадрам своей анимации
+        player.getWorld().playSound(player, player.getX(), player.getY(), player.getZ(), ModSounds.RELOAD,
                 SoundCategory.PLAYERS, 1.0f, 1.0f);
     }
 

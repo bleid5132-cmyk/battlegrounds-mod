@@ -76,6 +76,9 @@ public final class GeoAnimation {
     public final float length;
     public final boolean loop;
     final List<BoneTrack> tracks = new ArrayList<>();
+    /** Звуки, привязанные к моментам анимации: время (с) и имя звука мода. */
+    public float[] soundTimes = new float[0];
+    public String[] soundNames = new String[0];
 
     private GeoAnimation(String name, float length, boolean loop) {
         this.name = name;
@@ -97,6 +100,16 @@ public final class GeoAnimation {
                 if (chs.has("pos")) bt.pos = new Channel(chs.getAsJsonArray("pos"));
                 if (chs.has("scale")) bt.scale = new Channel(chs.getAsJsonArray("scale"));
                 anim.tracks.add(bt);
+            }
+            if (a.has("sounds")) {
+                JsonArray ss = a.getAsJsonArray("sounds");
+                anim.soundTimes = new float[ss.size()];
+                anim.soundNames = new String[ss.size()];
+                for (int i = 0; i < ss.size(); i++) {
+                    JsonArray k = ss.get(i).getAsJsonArray();
+                    anim.soundTimes[i] = k.get(0).getAsFloat();
+                    anim.soundNames[i] = k.get(1).getAsString();
+                }
             }
             out.put(e.getKey(), anim);
         }

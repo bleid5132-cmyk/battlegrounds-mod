@@ -133,7 +133,7 @@ public final class ShotFx {
     private static long lastNanos = -1;
 
     public static void onShot(int shooterId, Vec3d origin, Vec3d hit, int type, int faceId, int stateId,
-                              boolean suppressed, boolean flashHidden) {
+                              boolean suppressed, boolean flashHidden, boolean heavy) {
         MinecraftClient mc = MinecraftClient.getInstance();
         ClientWorld world = mc.world;
         if (world == null) return;
@@ -142,6 +142,7 @@ public final class ShotFx {
         boolean localFp = shooter == mc.player && mc.options.getPerspective().isFirstPerson();
 
         Vec3d muzzle = shooter instanceof PlayerEntity p ? muzzleWorld(p, localFp) : origin.add(dir);
+        GunSounds.shot(shooter == mc.player ? mc.player.getEyePos() : muzzle, shooter == mc.player, suppressed, heavy);
         // вспышка для вида со стороны
         if (!localFp && !suppressed) {
             Flash f = new Flash();
@@ -294,6 +295,7 @@ public final class ShotFx {
     }
 
     public static void renderWorld(WorldRenderContext ctx) {
+        GunSounds.update();
         VertexConsumerProvider vcp = ctx.consumers();
         ClientWorld world = MinecraftClient.getInstance().world;
         if (vcp == null || world == null) return;
