@@ -77,7 +77,11 @@ def frame(geo, rgb, pose=None, aim=0.0, hidden=(), arms=True, cam_rot=None, fov=
         if skip:
             continue
         for c in b['cubes']:
-            boxes.append((Wm[name], c['f'], c['t'], rgb[c['s']]))
+            M = Wm[name]
+            if 'r' in c:
+                o = c.get('o', [0, 0, 0])
+                M = M @ T(o) @ M4(rot_xyz(*c['r'])) @ T([-v for v in o])
+            boxes.append((M, c['f'], c['t'], rgb[c['s']]))
     if arms:
         for side in ('right', 'left'):
             n = side + 'hand'

@@ -58,7 +58,19 @@ public final class GeoRenderer {
         matrices.translate(-b.pivot.x, -b.pivot.y, -b.pivot.z);
         if (!b.cubes.isEmpty()) {
             MatrixStack.Entry e = matrices.peek();
-            for (GeoModel.Cube c : b.cubes) cube(model, c, e.getPositionMatrix(), e.getNormalMatrix(), vc, light, overlay);
+            for (GeoModel.Cube c : b.cubes) {
+                if (c.rot == null) {
+                    cube(model, c, e.getPositionMatrix(), e.getNormalMatrix(), vc, light, overlay);
+                } else {
+                    matrices.push();
+                    matrices.translate(c.origin.x, c.origin.y, c.origin.z);
+                    matrices.multiply(GeoModel.rotation(c.rot.x, c.rot.y, c.rot.z));
+                    matrices.translate(-c.origin.x, -c.origin.y, -c.origin.z);
+                    MatrixStack.Entry r = matrices.peek();
+                    cube(model, c, r.getPositionMatrix(), r.getNormalMatrix(), vc, light, overlay);
+                    matrices.pop();
+                }
+            }
         }
         for (int child : b.children) {
             bone(model, model.bones.get(child), pose, matrices, vc, vcp, light, overlay, hidden, hook);

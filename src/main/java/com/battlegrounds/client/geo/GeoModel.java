@@ -21,6 +21,8 @@ public final class GeoModel {
     public static final class Cube {
         public final float x0, y0, z0, x1, y1, z1;
         public final int swatch;
+        /** Необязательный поворот куба (градусы) вокруг точки origin. */
+        public Vector3f rot, origin;
 
         Cube(float x0, float y0, float z0, float x1, float y1, float z1, int swatch) {
             this.x0 = x0; this.y0 = y0; this.z0 = z0;
@@ -102,6 +104,10 @@ public final class GeoModel {
                     JsonArray t = c.getAsJsonArray("t");
                     Cube cube = new Cube(f.get(0).getAsFloat(), f.get(1).getAsFloat(), f.get(2).getAsFloat(),
                             t.get(0).getAsFloat(), t.get(1).getAsFloat(), t.get(2).getAsFloat(), c.get("s").getAsInt());
+                    if (c.has("r")) {
+                        cube.rot = vec(c, "r", 0);
+                        cube.origin = vec(c, "o", 0);
+                    }
                     bone.cubes.add(cube);
                     m.min.min(new Vector3f(cube.x0, cube.y0, cube.z0));
                     m.max.max(new Vector3f(cube.x1, cube.y1, cube.z1));
