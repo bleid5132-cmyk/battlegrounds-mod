@@ -192,7 +192,7 @@ def reload(empty):
 # левая берёт цевьё -> верх оружия к камере -> почти вертикально -> левая отпускает, разворот -> на место
 import sys as _sys, numpy as _np
 _sys.path.insert(0, os.path.dirname(__file__))
-from geolib import rot_xyz as _R, euler_from_matrix as _E, Geo as _Geo, sample_channel as _S
+from geolib import rot_xyz as _R, euler_from_matrix as _E, Geo as _Geo, sample_channel as _S, sample_anim
 _geo = _Geo.load(os.path.join(os.path.dirname(__file__), '..', 'src', 'main', 'resources', 'assets', 'battlegrounds', 'geo', 'm416.json'))
 
 
@@ -204,42 +204,45 @@ def _look(m, up):
     return [round(v, 2) for v in _E(_np.column_stack([x, y, z]))]
 
 
-_IN_POSE = [  # t, ствол, верх, позиция корня (px)
-    (0.0, None, None, (0, 0, 0)),
-    (0.15, (-0.08, 0.06, -0.99), (0.02, 1, 0.05), (-0.2, 0.2, -1.0)),
-    (0.35, (-0.75, 0.3, -0.6), (0.1, 0.95, 0.25), (3.7, -2.7, -6.2)),
-    (0.5, (-0.86, 0.32, -0.4), (0.08, 0.95, 0.3), (6.8, -4.2, -8.1)),
-    (1.2, (-0.9, 0.33, -0.3), (0.08, 0.95, 0.3), (6.3, -4.2, -8.5)),
-    (2.2, (-0.9, 0.32, -0.3), (0.08, 0.95, 0.32), (6.3, -4.3, -8.5)),
-    (3.1, (-0.9, 0.33, -0.3), (0.08, 0.95, 0.3), (6.3, -4.2, -8.5)),
-    (3.3, (-0.86, 0.42, -0.3), (0.12, 0.9, 0.4), (6.1, -4.0, -8.7)),
-    (3.48, (-0.8, 0.45, -0.4), (0.2, 0.4, 0.9), (-1.0, -5.6, -11.0)),
-    (3.65, (-0.8, 0.42, -0.42), (0.2, 0.3, 0.93), (-2.6, -8.2, -11.0)),
-    (4.05, (-0.79, 0.44, -0.42), (0.2, 0.3, 0.93), (-2.8, -8.0, -11.0)),
-    (4.25, (-0.62, 0.62, -0.45), (0.5, 0.25, 0.83), (-0.1, -7.4, -11.0)),
-    (4.35, (-0.62, 0.58, -0.5), (0.45, 0.5, 0.75), (0.7, -6.8, -10.6)),
-    (4.5, (-0.62, 0.5, -0.6), (0.3, 0.9, 0.3), (1.9, -5.8, -9.0)),
-    (4.7, (-0.15, 0.2, -0.97), (0.02, 1, 0.1), (0.6, -1.4, -2.6)),
-    (4.82, (0.01, -0.01, -1), (0, 1, 0), (0.1, -0.1, 0.1)),
-    (4.9, None, None, (0, 0, 0)),
-]
+# позы корня подобраны по видео-эталону покадрово (tools/ref: measure.py -> runfit.py):
+# на каждом кадре совпадают положение дульного среза на экране и угол ствола
+from scipy.spatial.transform import Rotation as _Rot, Slerp as _Slerp
+_fit = {float(k): v for k, v in json.load(open(os.path.join(os.path.dirname(__file__), 'ref', 'm416_inspect_fit.json'))).items()}
+_ft = sorted(t for t in _fit if t <= 4.75)
+_fv = _np.array([_fit[t] for t in _ft])
+# лёгкое сглаживание шума измерений (окно 3 кадра)
+_fs = _fv.copy()
+# без сглаживания: подгонка и так непрерывна (регуляризация к предыдущему кадру)
+
+
+def _q(e):
+    return _Rot.from_matrix(_R(*e))
+
+
+def _blend(e0, p0, e1, p1, k):
+    sl = _Slerp([0, 1], _Rot.concatenate([_q(e0), _q(e1)]))
+    e = _E(sl([k]).as_matrix()[0])
+    return [round(v, 3) for v in e], [round(a + (b - a) * k, 3) for a, b in zip(p0, p1)]
+
+
 _rk, _pk = [], []
-for _t, _m, _u, _p in _IN_POSE:
-    _e = [0, 0, 0] if _m is None else _look(_m, _u)
-    _rk.append((_t, *_e))
-    _pk.append((_t, *_p))
-A['inspect'] = {'length': 4.9, 'bones': {
-    'root': {'rot': ch(*_rk), 'pos': ch(*_pk)},
-    'camera': {'rot': ch((0.0, 0, 0, 0), (0.4, 0.4, 0.3, -0.2), (3.1, 0.3, 0.3, -0.2), (3.5, 0.8, -0.2, 0.3),
-                         (4.1, 0.5, -0.3, 0.2), (4.5, -0.3, 0.1, 0), (4.9, 0, 0, 0))},
-}}
+_first, _last = _fs[0], _fs[-1]
+for _t, _k in ((0.0, 0), (0.1, 0), (0.15, 0.06), (0.2, 0.22), (0.25, 0.45), (0.3, 0.75)):  # левая рука отпускает, оружие уходит в профиль
+    e, p = _blend([0, 0, 0], [0, 0, 0], _first[:3], _first[3:], _k)
+    _rk.append([_t, *e, 'l']); _pk.append([_t, *p, 'l'])
+for _t, _v in zip(_ft, _fs):
+    _rk.append([_t, *[round(x, 3) for x in _v[:3]], 'c']); _pk.append([_t, *[round(x, 3) for x in _v[3:]], 'c'])
+for _t, _k in ((4.8, 0.45), (4.85, 0.85), (4.9, 1.0)):          # возврат в обычное положение
+    e, p = _blend(_last[:3], _last[3:], [0, 0, 0], [0, 0, 0], _k)
+    _rk.append([_t, *e, 'l']); _pk.append([_t, *p, 'l'])
+A['inspect'] = {'length': 4.9, 'bones': {'root': {'rot': _rk, 'pos': _pk}}}
 
 
 def _compensate(anim, hand, weight_keys):
     """Ключи поворота руки, которые гасят поворот корня (с весом по времени)."""
     rest = _R(*_geo.bones[hand]['rot'])
     out = []
-    for t in [round(i * 0.05, 2) for i in range(int(anim['length'] / 0.05) + 1)]:
+    for t in [round(i * 0.05, 2) for i in range(int(round(anim['length'] / 0.05)) + 1)]:
         w = float(_np.interp(t, [a for a, _ in weight_keys], [b for _, b in weight_keys]))
         Rr = _R(*_S(anim['bones']['root']['rot'], t))
         e = _E(rest.T @ Rr.T @ rest)
@@ -249,19 +252,27 @@ def _compensate(anim, hand, weight_keys):
 
 _ins = A['inspect']
 _ins['bones']['righthand'] = {'rot': _compensate(_ins, 'righthand', [(0, 1), (4.9, 1)])}
-# левая рука: 1 = отпущена (смещена вниз-влево в осях камеры), 0 = держит цевьё
-_LH_T = [0, 0.12, 0.35, 3.2, 3.45, 4.28, 4.42, 4.62, 4.8, 4.9]
-_LH_A = [0, 0, 1, 1, 0, 0, 0.3, 0.3, 0, 0]
-_lh, _lr = [], []
+# левая рука по эталону: 0.12-0.3 отпускает и уходит вниз за кадр; 3.25-3.45 берёт цевьё;
+# 4.15-4.35 отпускает, раскрытая ладонь стоит внизу слева; 4.72-4.82 снова берёт цевьё
+_CAMP = _np.array(_geo.locator('idle_view')[:3, 3])
+_OPEN = _CAMP + _np.array(_geo.locator('idle_view')[:3, :3]) @ _np.array([-20.6, -15.3, -30.0])         # раскрытая ладонь: экран (0.235, 0.87)
+_LT = [0, 0.12, 0.3, 3.25, 3.45, 4.15, 4.35, 4.72, 4.82, 4.9]
+_LA = [0, 0, 1, 1, 0, 0, 1, 1, 0, 0]
+_lh = []
+_piv = _np.array(_geo.bones['lefthand']['pivot'], float)
 for t in [round(i * 0.05, 2) for i in range(99)]:
-    amt = float(_np.interp(t, _LH_T, _LH_A))
-    Rr = _R(*_S(_ins['bones']['root']['rot'], t))
-    off = Rr.T @ _np.array([-5.0, -24.0, 8.0]) * amt
+    a = float(_np.interp(t, _LT, _LA))
+    pose = sample_anim(_ins, t); pose.pop('lefthand', None)
+    Wp = _geo.world(pose)['mag_and_hand']
+    att = (Wp @ _np.append(_piv, 1))[:3]
+    if t < 3.5:
+        tgt = att + _np.array([-5.0, -24.0, 8.0])
+    else:
+        tgt = _OPEN
+    d = (tgt - att) * a
+    off = Wp[:3, :3].T @ d
     _lh.append([t, round(off[0], 3), round(off[1], 3), round(off[2], 3), 'l'])
-_ins['bones']['lefthand'] = {'pos': _lh}
-# пока левая отпущена — компенсируем поворот (рука висит), пока держит — двигается с цевьём
-_wl = [(t, a) for t, a in zip(_LH_T, _LH_A)]
-_ins['bones']['lefthand']['rot'] = _compensate(_ins, 'lefthand', [(t, min(1.0, a * 2)) for t, a in _wl])
+_ins['bones']['lefthand'] = {'pos': _lh, 'rot': _compensate(_ins, 'lefthand', list(zip(_LT, _LA)))}
 
 A['reload_tactical'] = reload(False)
 A['reload_empty'] = reload(True)

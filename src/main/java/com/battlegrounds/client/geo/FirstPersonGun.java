@@ -357,6 +357,12 @@ public final class FirstPersonGun {
         Vector3f idle = model.locator("idle_view");
         Vector3f aimAt = aimPoint(model, mods);
         float a = aimValue;
+        // наклон камеры от бедра (viewmodel), при прицеливании плавно уходит в ноль
+        GeoModel.Bone ib = model.bone("idle_view");
+        if (ib != null && ib.rest.lengthSquared() > 1e-6f && a < 1f) {
+            org.joml.Quaternionf inv = GeoModel.rotation(ib.rest.x, ib.rest.y, ib.rest.z).conjugate();
+            matrices.multiply(new org.joml.Quaternionf().slerp(inv, 1f - a));
+        }
         if (idle != null && aimAt != null) {
             matrices.translate(-(idle.x + (aimAt.x - idle.x) * a), -(idle.y + (aimAt.y - idle.y) * a),
                     -(idle.z + (aimAt.z - idle.z) * a));
