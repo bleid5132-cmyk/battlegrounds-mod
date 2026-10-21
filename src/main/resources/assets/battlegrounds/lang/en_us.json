@@ -79,6 +79,5 @@
   "slot.battlegrounds.magazine": "Magazine",
   "slot.battlegrounds.stock": "Stock",
   "slot.battlegrounds.unavailable": "%s — not available for this gun",
-  "subtitles.battlegrounds.shot_suppressed": "Suppressed shot",
-  "key.battlegrounds.inspect": "Inspect Weapon"
+  "subtitles.battlegrounds.shot_suppressed": "Suppressed shot"
 }

@@ -79,6 +79,5 @@
   "slot.battlegrounds.magazine": "Магазин",
   "slot.battlegrounds.stock": "Приклад",
   "slot.battlegrounds.unavailable": "%s — нельзя на это оружие",
-  "subtitles.battlegrounds.shot_suppressed": "Выстрел с глушителем",
-  "key.battlegrounds.inspect": "Осмотр оружия"
+  "subtitles.battlegrounds.shot_suppressed": "Выстрел с глушителем"
 }

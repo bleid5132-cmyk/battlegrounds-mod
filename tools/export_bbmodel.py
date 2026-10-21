@@ -16,7 +16,7 @@ SKIP = {'idle_view', 'iron_view'}
 NAMES_RU = {
     'draw': 'Доставание', 'put_away': 'Убирание', 'shoot': 'Выстрел', 'idle': 'Покой', 'walk': 'Ходьба',
     'walk_aiming': 'Ходьба в прицеле', 'run_start': 'Бег: старт', 'run': 'Бег', 'run_end': 'Бег: остановка',
-    'ads_up': 'Подъём к прицелу', 'reload_tactical': 'Перезарядка', 'reload_empty': 'Перезарядка пустого', 'inspect': 'Осмотр (F)',
+    'ads_up': 'Подъём к прицелу', 'reload_tactical': 'Перезарядка', 'reload_empty': 'Перезарядка пустого',
 }
 # рука Minecraft 4x12x4: точка хвата G и куб (рукав до y=9, дальше кисть)
 ARM = {'righthand': ([-6, 11, 0], (-8, 0, -2), (-4, 12, 2)), 'lefthand': ([6, 11, 0], (4, 0, -2), (8, 12, 2))}
@@ -162,7 +162,7 @@ def main(gun, out_bb, out_view):
                    'scale': [1, 1, 1] if b['name'] in ARM else b.get('scale', [1, 1, 1]), 'cubes': cubes, 'arms': arms})
     views = {k: geo.bones[k]['pivot'] for k in ('idle_view', 'iron_view')}
     order = ['draw', 'idle', 'walk', 'walk_aiming', 'run_start', 'run', 'run_end', 'ads_up', 'shoot',
-             'reload_tactical', 'reload_empty', 'inspect', 'put_away']
+             'reload_tactical', 'reload_empty', 'put_away']
     out_anims = [{'id': k, 'name': NAMES_RU.get(k, k), **anims[k]} for k in order if k in anims]
     json.dump({'bones': vb, 'views': views, 'anims': out_anims}, open(out_view, 'w'), separators=(',', ':'))
     print(len(elements), 'кубов,', len(bb_anims), 'анимаций ->', out_bb)

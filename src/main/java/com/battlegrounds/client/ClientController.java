@@ -73,9 +73,6 @@ public final class ClientController {
         while (BattlegroundsClient.FIRE_MODE.wasPressed()) {
             if (gun != null) ClientNet.fireMode();
         }
-        while (BattlegroundsClient.INSPECT.wasPressed()) {
-            if (gun != null && inGame) FirstPersonGun.inspect(stack);
-        }
         while (BattlegroundsClient.ATTACHMENTS.wasPressed()) {
             if (gun != null && inGame) ClientNet.openAttachments();
         }
