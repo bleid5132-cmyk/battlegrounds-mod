@@ -533,6 +533,43 @@ bone('camera', pivot=(0, 13.4, 16.0))
 bone('idle_view', pivot=(-3.25, 13.4, 16.1))
 bone('iron_view', pivot=(0, 13.3, 14.6))
 
+# ------------------------------------------------------------------ ширина как в эталоне TACZ
+# коробка 2.1 px, цевьё ~2.2 px, рукоять 1.25 px, магазин 1.1 px. Сужаем только по x;
+# круглые детали вдоль ствола (восьмигранники вокруг оси z) не трогаем.
+
+
+def narrow(bn, k, zrange=None):
+    for c in _by[bn]['cubes']:
+        z0, z1 = c['f'][2], c['t'][2]
+        if zrange and not (z1 > zrange[0] and z0 < zrange[1]):
+            continue
+        r = c.get('r')
+        if r is None or (r[0] != 0 and r[1] == 0 and r[2] == 0):
+            # без поворота или поворот вокруг x: масштаб x коммутирует с поворотом
+            c['f'][0] = round(c['f'][0] * k, 4)
+            c['t'][0] = round(c['t'][0] * k, 4)
+            if r is not None:
+                c['o'][0] = round(c['o'][0] * k, 4)
+        else:
+            # повёрнутый куб (фаска, восьмигранник): сдвигаем целиком, форму сохраняем
+            ox = c['o'][0]
+            if abs(ox) < 1e-6:
+                continue
+            dx = ox * k - ox
+            c['f'][0] = round(c['f'][0] + dx, 4)
+            c['t'][0] = round(c['t'][0] + dx, 4)
+            c['o'][0] = round(ox + dx, 4)
+
+
+narrow(G, 0.73, (HG0 - 0.5, HG1 + 0.1))         # цевьё 3.0 -> 2.2
+narrow(G, 0.875, (HG1 + 0.1, 99))               # коробки 2.4 -> 2.1
+narrow(G, 0.875, (-99, HG0 - 0.5))
+narrow('pgrip', 0.55)                           # рукоять 2.3 -> 1.25
+narrow('magazine', 0.6)                         # магазин 1.8 -> 1.1
+narrow('mag_lower', 0.6)
+narrow('stock_default', 0.875)
+narrow('charge_handle', 0.875)
+
 # ------------------------------------------------------------------ запись
 cubes = sum(len(b['cubes']) for b in bones)
 data = {
