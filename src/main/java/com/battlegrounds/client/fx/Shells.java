@@ -36,6 +36,7 @@ import java.util.Random;
  */
 public final class Shells {
     private static final Random RND = new Random();
+    private static final float FP_SCALE = 1.6f;
 
     // ---------------- от первого лица ----------------
     private static final class ViewShell {
@@ -99,8 +100,9 @@ public final class Shells {
             matrices.push();
             matrices.translate(s.pos.x, s.pos.y, s.pos.z);
             matrices.multiply(s.rot);
-            matrices.scale(1f / 16f, 1f / 16f, 1f / 16f);
-            draw(s.model, matrices, vcp, light | 0xF0);   // подсветка блок-светом: латунь видна и в тени
+            // от первого лица гильза крупнее и полностью освещена, чтобы её было хорошо видно при вылете
+            matrices.scale(FP_SCALE / 16f, FP_SCALE / 16f, FP_SCALE / 16f);
+            draw(s.model, matrices, vcp, net.minecraft.client.render.LightmapTextureManager.MAX_LIGHT_COORDINATE);
             matrices.pop();
         }
     }
@@ -157,7 +159,7 @@ public final class Shells {
         for (Iterator<WorldShell> it = WORLD.iterator(); it.hasNext(); ) {
             WorldShell s = it.next();
             s.age++;
-            if (s.age > 100) {
+            if (s.age > 60) {
                 it.remove();
                 continue;
             }
@@ -199,7 +201,7 @@ public final class Shells {
         float td = ctx.tickDelta();
         for (WorldShell s : WORLD) {
             Vec3d p = s.prev.lerp(s.pos, td);
-            int light = WorldRenderer.getLightmapCoordinates(world, BlockPos.ofFloored(p)) | 0x80;
+            int light = WorldRenderer.getLightmapCoordinates(world, BlockPos.ofFloored(p));
             m.push();
             m.translate(p.x - cam.x, p.y - cam.y, p.z - cam.z);
             m.multiply(s.rot);

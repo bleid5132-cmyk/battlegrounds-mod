@@ -39,8 +39,6 @@ SW = {
     'copper': (170, 100, 60),
     'mark': (120, 122, 118),   # белые риски на планках
     'tritium': (120, 220, 120),
-    'shell': (236, 190, 92),     # гильза — яркая латунь, чтобы было видно в полёте
-    'shell_d': (196, 150, 66),
 }
 SLOT = {n: i for i, n in enumerate(SW)}
 
@@ -636,9 +634,9 @@ data = {
     'third_person_scale': 0.6,
     'gui_scale': 0.42,
     # гильза 5.56: размер (px), цвет корпуса и донца; вылет в системе оружия (px/с), как у TACZ
-    'shell': {'size': [0.62, 0.62, 2.5], 'swatch': SLOT['shell'], 'swatch_end': SLOT['shell_d'],
-              'velocity': [50, 40, 6], 'random': [10, 10, 4], 'gravity': -115,
-              'spin': [220, -720, 60], 'life': 1.5},
+    'shell': {'size': [0.42, 0.42, 1.75], 'swatch': SLOT['brass'], 'swatch_end': SLOT['brass_d'],
+              'velocity': [70, 28, 10], 'random': [15, 15, 4], 'gravity': -160,
+              'spin': [360, -1200, 90], 'life': 1.0},
     'bones': bones,
 }
 os.makedirs(os.path.join(ROOT, 'geo'), exist_ok=True)

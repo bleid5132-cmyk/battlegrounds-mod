@@ -28,9 +28,13 @@ public abstract class GameRendererMixin {
             if (zoom != 1.0) {
                 cir.setReturnValue(cir.getReturnValue() / zoom);
             }
-        } else if (FirstPersonGun.active()) {
-            float a = MathHelper.clamp(FirstPersonGun.aim(), 0f, 1f);
-            cir.setReturnValue(MathHelper.lerp(a, cir.getReturnValue(), 48.0));
+            com.battlegrounds.client.fx.ShotFx.worldFov = cir.getReturnValue();
+        } else {
+            if (FirstPersonGun.active()) {
+                float a = MathHelper.clamp(FirstPersonGun.aim(), 0f, 1f);
+                cir.setReturnValue(MathHelper.lerp(a, cir.getReturnValue(), 48.0));
+            }
+            com.battlegrounds.client.fx.ShotFx.handFov = cir.getReturnValue();
         }
     }
 

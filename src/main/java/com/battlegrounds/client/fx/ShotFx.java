@@ -51,6 +51,9 @@ public final class ShotFx {
 
     // ------------------------------------------------------------ вспышка от первого лица
     private static final Matrix4f MUZZLE = new Matrix4f();
+    /** Поле зрения мира и рук (рисуются с разными проекциями) — нужно, чтобы трассер шёл точно из дула. */
+    public static double worldFov = 70, handFov = 70;
+    private static float muzzleForward = 2.7f;
     private static boolean muzzleValid;
     private static long fpFlashUntil = -1;
     private static boolean fpFlashShown = true;
@@ -73,6 +76,7 @@ public final class ShotFx {
 
     /** Рисуем вспышку у дульного среза (вызывается из рендера оружия от первого лица). */
     public static void renderFirstPersonFlash(VertexConsumerProvider vcp, float muzzleForwardPx) {
+        muzzleForward = muzzleForwardPx;
         if (!muzzleValid || fpFlashUntil < 0) return;
         long now = System.currentTimeMillis();
         if (now > fpFlashUntil && fpFlashShown) return;
@@ -84,7 +88,7 @@ public final class ShotFx {
         float s = fpFlashScale;
         // звезда поперёк ствола
         VertexConsumer front = vcp.getBuffer(RenderLayer.getEyes(TEX_FRONT));
-        quadXY(m, front, 5.5f * s, 1f);
+        quadXY(m, front, 4.2f * s, 1f);
         // два лепестка вдоль ствола (крест)
         VertexConsumer side = vcp.getBuffer(RenderLayer.getEyes(TEX_SIDE));
         for (int k = 0; k < 2; k++) {
@@ -148,15 +152,15 @@ public final class ShotFx {
             f.until = System.currentTimeMillis() + 45;
             FLASHES.add(f);
         }
-        // пороховой дымок у ствола
-        int smoke = suppressed ? 1 : 2;
+        // пороховой дымок у ствола (от первого лица не нужен — он оказывается прямо перед камерой)
+        int smoke = localFp ? 0 : 1;
         for (int i = 0; i < smoke; i++) {
             world.addParticle(ParticleTypes.SMOKE, muzzle.x, muzzle.y, muzzle.z,
                     dir.x * 0.03 + RND.nextGaussian() * 0.008, 0.012 + dir.y * 0.03, dir.z * 0.03 + RND.nextGaussian() * 0.008);
         }
         // трассер
         if (!suppressed) {
-            Vec3d from = muzzle.add(dir.multiply(0.6));
+            Vec3d from = localFp ? muzzle : muzzle.add(dir.multiply(0.6));
             double total = from.distanceTo(hit);
             if (total > 1.0) {
                 Streak s = new Streak();
@@ -184,10 +188,18 @@ public final class ShotFx {
         float yaw = p.getYaw(td) * MathHelper.RADIANS_PER_DEGREE;
         Vec3d right = new Vec3d(-MathHelper.cos(yaw), 0, -MathHelper.sin(yaw));
         Vec3d up = right.crossProduct(fwd).normalize().multiply(-1);
-        if (localFp) {
-            float aim = com.battlegrounds.client.ClientController.isAiming() ? 1f : 0f;
-            return eye.add(fwd.multiply(0.9)).add(right.multiply(0.13 * (1 - aim)))
-                    .add(up.multiply(-0.11 * (1 - aim) - 0.03 * aim));
+        if (localFp && muzzleValid) {
+            // дуло в пространстве рук → точка на экране → та же точка экрана в мире (у мира другое поле зрения)
+            Vector3f q = MUZZLE.transformPosition(new Vector3f(0, 0, -muzzleForward));
+            if (q.z < -0.01f) {
+                double th = Math.tan(Math.toRadians(handFov) / 2), tw = Math.tan(Math.toRadians(worldFov) / 2);
+                double sx = q.x / -q.z / th, sy = q.y / -q.z / th;
+                double depth = Math.max(0.6, -q.z);
+                Vec3d r = fwd.crossProduct(new Vec3d(0, 1, 0));
+                if (r.lengthSquared() < 1e-6) r = right; else r = r.normalize();
+                Vec3d u = r.crossProduct(fwd).normalize();
+                return eye.add(fwd.multiply(depth)).add(r.multiply(sx * tw * depth)).add(u.multiply(sy * tw * depth));
+            }
         }
         return eye.add(fwd.multiply(0.95)).add(right.multiply(0.22)).add(up.multiply(-0.2));
     }
@@ -344,9 +356,9 @@ public final class ShotFx {
                     a = s.from.add(d.multiply(Math.min(s.head, s.total)));
                     b = s.from.add(d.multiply(Math.max(0, tail)));
                     if (a.squaredDistanceTo(b) < 1e-4) continue;
-                    // чем дальше трассер, тем шире (иначе издалека не видно)
+                    // постоянная видимая толщина: у дула тонкий, вдали не теряется
                     double dist = a.add(b).multiply(0.5).distanceTo(cam);
-                    float w = (float) (s.width * Math.max(1.0, dist / 12.0));
+                    float w = (float) Math.max(0.003, 0.0028 * dist);
                     streak(m, tr, cam, a, b, w, 1f);
                 }
             }
