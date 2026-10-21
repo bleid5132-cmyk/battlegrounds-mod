@@ -74,7 +74,6 @@ public final class Shells {
         s.vel.set(v);
         Matrix3f r = new Matrix3f();
         PORT.get3x3(r);
-        r.normalize();
         r.getNormalizedRotation(s.rot);
         s.spin.set(si.spin).mul(0.8f + RND.nextFloat() * 0.4f);
         VIEW.add(s);
