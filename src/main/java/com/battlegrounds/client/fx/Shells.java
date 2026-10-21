@@ -100,7 +100,7 @@ public final class Shells {
             matrices.translate(s.pos.x, s.pos.y, s.pos.z);
             matrices.multiply(s.rot);
             matrices.scale(1f / 16f, 1f / 16f, 1f / 16f);
-            draw(s.model, matrices, vcp, light);
+            draw(s.model, matrices, vcp, light | 0xF0);   // подсветка блок-светом: латунь видна и в тени
             matrices.pop();
         }
     }
@@ -157,7 +157,7 @@ public final class Shells {
         for (Iterator<WorldShell> it = WORLD.iterator(); it.hasNext(); ) {
             WorldShell s = it.next();
             s.age++;
-            if (s.age > 60) {
+            if (s.age > 100) {
                 it.remove();
                 continue;
             }
@@ -199,7 +199,7 @@ public final class Shells {
         float td = ctx.tickDelta();
         for (WorldShell s : WORLD) {
             Vec3d p = s.prev.lerp(s.pos, td);
-            int light = WorldRenderer.getLightmapCoordinates(world, BlockPos.ofFloored(p));
+            int light = WorldRenderer.getLightmapCoordinates(world, BlockPos.ofFloored(p)) | 0x80;
             m.push();
             m.translate(p.x - cam.x, p.y - cam.y, p.z - cam.z);
             m.multiply(s.rot);
