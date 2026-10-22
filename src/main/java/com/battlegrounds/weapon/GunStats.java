@@ -60,7 +60,7 @@ public record GunStats(
             List.of(AUTO, SINGLE), 1, NO_STOCK, 0.98f);
 
     public static final GunStats QBZ = new GunStats("qbz", AmmoType.A556, 8.2f, 30, 40,
-            0.092f, 48, 2.2f, 0.25f, 0.8f, 0.4f, 300f, 2.35f, 1.25f,
+            0.092f, 46, 2.2f, 0.25f, 0.8f, 0.4f, 300f, 2.35f, 1.25f,
             List.of(AUTO, SINGLE), 1, NO_STOCK, 1.02f);
 
     public static final GunStats G36C = new GunStats("g36c", AmmoType.A556, 8.2f, 30, 40,
@@ -68,15 +68,15 @@ public record GunStats(
             List.of(AUTO, SINGLE), 1, NO_STOCK, 1.08f);
 
     public static final GunStats AUG = new GunStats("aug", AmmoType.A556, 8.2f, 30, 40,
-            0.0857f, 60, 2.1f, 0.22f, 0.65f, 0.3f, 300f, 2.35f, 1.25f,
+            0.0857f, 46, 2.1f, 0.22f, 0.65f, 0.3f, 300f, 2.35f, 1.25f,
             List.of(AUTO, SINGLE), 1, NO_STOCK, 1.04f);
 
     public static final GunStats BERYL = new GunStats("beryl_m762", AmmoType.A762, 8.8f, 30, 40,
-            0.086f, 58, 2.6f, 0.3f, 1.3f, 0.75f, 300f, 2.35f, 1.25f,
+            0.086f, 48, 2.6f, 0.3f, 1.3f, 0.75f, 300f, 2.35f, 1.25f,
             List.of(AUTO, BURST, SINGLE), 3, NO_STOCK, 0.92f);
 
     public static final GunStats GROZA = new GunStats("groza", AmmoType.A762, 9.4f, 30, 40,
-            0.08f, 60, 2.5f, 0.3f, 1.05f, 0.5f, 280f, 2.35f, 1.25f,
+            0.08f, 46, 2.5f, 0.3f, 1.05f, 0.5f, 280f, 2.35f, 1.25f,
             List.of(AUTO, SINGLE), 1, NO_GRIP_STOCK, 0.88f);
 
     public static final GunStats MK47 = new GunStats("mk47_mutant", AmmoType.A762, 9.8f, 20, 30,
@@ -84,7 +84,7 @@ public record GunStats(
             List.of(BURST, SINGLE), 2, NO_STOCK, 0.86f);
 
     public static final GunStats ACE32 = new GunStats("ace32", AmmoType.A762, 8.6f, 30, 40,
-            0.088f, 58, 2.5f, 0.3f, 1.0f, 0.55f, 300f, 2.35f, 1.25f,
+            0.088f, 48, 2.5f, 0.3f, 1.0f, 0.55f, 300f, 2.35f, 1.25f,
             List.of(AUTO, SINGLE), 1, ALL, 0.9f);
 
     public static final GunStats K2 = new GunStats("k2", AmmoType.A556, 8.2f, 30, 40,
@@ -92,7 +92,7 @@ public record GunStats(
             List.of(AUTO, BURST, SINGLE), 3, NO_STOCK, 1.03f);
 
     public static final GunStats FAMAS = new GunStats("famas", AmmoType.A556, 7.8f, 25, 35,
-            0.0667f, 52, 2.3f, 0.25f, 0.75f, 0.45f, 280f, 2.35f, 1.25f,
+            0.0667f, 46, 2.3f, 0.25f, 0.75f, 0.45f, 280f, 2.35f, 1.25f,
             List.of(AUTO, BURST, SINGLE), 3, NO_GRIP_STOCK, 1.1f);
 
     public static final List<GunStats> ASSAULT_RIFLES = List.of(

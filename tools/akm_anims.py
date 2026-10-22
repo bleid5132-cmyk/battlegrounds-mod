@@ -123,3 +123,9 @@ json.dump({'animations': A}, open(os.path.join(OUT, 'akm.json'), 'w'), separator
 if __name__ == '__main__':
     for k, v in A.items():
         print(k, v['length'])
+
+# ------------------------------------------------------------------ та же механика у Beryl M762 и ACE32 (собраны в системе AKM)
+for gid, recoil in (('beryl_m762', 1.4 / 1.3), ('ace32', 1.15 / 1.3)):
+    B2 = copy.deepcopy(A)
+    B2['shoot'] = scale_values(A['shoot'], recoil)
+    json.dump({'animations': B2}, open(os.path.join(OUT, gid + '.json'), 'w'), separators=(',', ':'))
