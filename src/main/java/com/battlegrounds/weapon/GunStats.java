@@ -48,7 +48,7 @@ public record GunStats(
             List.of(AUTO, SINGLE), 1, ALL, 1.0f);
 
     public static final GunStats AKM = new GunStats("akm", AmmoType.A762, 9.4f, 30, 40,
-            0.1f, 58, 2.6f, 0.3f, 1.25f, 0.6f, 300f, 2.35f, 1.25f,
+            0.1f, 48, 2.6f, 0.3f, 1.25f, 0.6f, 300f, 2.35f, 1.25f,
             List.of(AUTO, SINGLE), 1, NO_GRIP_STOCK, 0.9f);
 
     public static final GunStats M16A4 = new GunStats("m16a4", AmmoType.A556, 8.6f, 30, 40,
