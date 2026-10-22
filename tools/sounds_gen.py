@@ -338,115 +338,256 @@ def polish(x, peak=0.9, room=0.12):
 
 
 # ------------------------------------------------------------------ механика
+# ------------------------------------------------------------------ физическая модель деталей оружия
+# Каждая деталь — набор собственных резонансов (частота, время затухания, вес). Удар — короткий импульс
+# силы контакта (чем твёрже, тем короче и ярче) с дребезгом; трение — поток микроударов (stick-slip).
+PARTS = {
+    # алюминиевая ствольная коробка: звонкая, держит звук десятки миллисекунд
+    'receiver': ([1180, 1730, 2380, 3160, 3990, 4880, 5910, 7120, 8420],
+                 [0.070, 0.058, 0.050, 0.042, 0.036, 0.030, 0.024, 0.019, 0.015],
+                 [1.0, 0.85, 0.9, 0.7, 0.6, 0.5, 0.38, 0.28, 0.2]),
+    # стальная затворная рама и затвор: тяжёлый удар и высокий звон стали
+    'bolt': ([690, 1040, 2610, 4120, 5630, 7410, 9280],
+             [0.030, 0.026, 0.060, 0.050, 0.042, 0.034, 0.026],
+             [0.9, 0.7, 0.8, 0.75, 0.6, 0.45, 0.3]),
+    # мелкая стальная защёлка/фиксатор: короткий яркий «щёлк»
+    'latch': ([3920, 5240, 6810, 8830, 10400],
+              [0.014, 0.012, 0.010, 0.008, 0.006],
+              [1.0, 0.8, 0.6, 0.4, 0.25]),
+    # полимерный магазин: глухой, быстро гаснет
+    'mag': ([380, 610, 880, 1250, 1710, 2330, 3100],
+            [0.012, 0.010, 0.009, 0.008, 0.007, 0.006, 0.005],
+            [1.0, 0.9, 0.75, 0.6, 0.45, 0.3, 0.2]),
+    # патроны внутри магазина (латунь): мелкий звон
+    'brass': ([3300, 4700, 6200, 8100],
+              [0.016, 0.013, 0.010, 0.008],
+              [1.0, 0.7, 0.5, 0.3]),
+    # пластиковые накладки, рукоять, приклад
+    'polymer': ([520, 840, 1310, 1920, 2700],
+                [0.009, 0.008, 0.007, 0.006, 0.005],
+                [1.0, 0.8, 0.6, 0.4, 0.25]),
+    # стальная антабка/карабин ремня: звонкое «дзинь»
+    'swivel': ([2870, 4310, 6090, 7950],
+               [0.090, 0.070, 0.050, 0.035],
+               [1.0, 0.7, 0.5, 0.3]),
+    # буферная пружина в трубе приклада: тихое «дзыннь» после удара затвора
+    'spring': ([310, 470, 655, 905, 1210],
+               [0.16, 0.13, 0.10, 0.08, 0.06],
+               [1.0, 0.6, 0.45, 0.3, 0.2]),
+}
+
+
+_NORM = {}
+
+
+def _part_norm(part):
+    """Громкость детали нормируется: эталонный удар (0.15 мс) даёт пик 1."""
+    if part not in _NORM:
+        n = int(0.15 / 1000 * SR)
+        e = np.zeros(int(0.2 * SR))
+        e[:n] = np.sin(np.pi * np.arange(n) / n)
+        _NORM[part] = 1.0
+        _NORM[part] = 1.0 / (np.max(np.abs(resonate(e, part, 1.0, 0.0))) + 1e-12)
+    return _NORM[part]
+
+
+def resonate(exc, part, gain=1.0, detune=0.015):
+    if part not in _NORM:
+        _part_norm(part)
+    gain = gain * _NORM[part]
+    freqs, decays, amps = PARTS[part]
+    out = np.zeros(len(exc))
+    for f, d, a in zip(freqs, decays, amps):
+        f = f * (1 + rng.normal(0, detune))
+        r = np.exp(-1.0 / (d * SR))
+        w = 2 * np.pi * f / SR
+        b_ = [(1 - r) * a]
+        a_ = [1, -2 * r * np.cos(w), r * r]
+        out += signal.lfilter(b_, a_, exc)
+    return out * gain
+
+
+def contact(width_ms=0.15, bounces=2, gap_ms=1.5, sec=0.25):
+    """Импульс силы контакта (полусинус) с дребезгом: несколько отскоков с убывающей силой."""
+    x = np.zeros(int(sec * SR))
+    t0 = 0.0
+    amp = 1.0
+    for i in range(bounces + 1):
+        n = max(2, int(width_ms / 1000 * SR * rng.uniform(0.85, 1.15)))
+        i0 = int(t0 * SR)
+        if i0 + n >= len(x):
+            break
+        x[i0:i0 + n] += amp * np.sin(np.pi * np.arange(n) / n)
+        t0 += gap_ms / 1000 * rng.uniform(0.6, 1.4) * (0.7 ** i)
+        amp *= rng.uniform(0.25, 0.45)
+    return x
+
+
+def strike(parts, width_ms=0.15, bounces=2, gap_ms=1.5, sec=0.3, flesh=0.0):
+    """Удар деталей друг о друга. parts — [(деталь, громкость), ...]; flesh — доля мягкого удара ладонью."""
+    exc = contact(width_ms, bounces, gap_ms, sec)
+    out = np.zeros(len(exc))
+    for part, g in parts:
+        out += resonate(exc, part, g)
+    if flesh > 0:
+        n = int(SR * 0.004)
+        f = np.zeros(len(exc))
+        f[:n] = np.sin(np.pi * np.arange(n) / n)
+        f = lp(f, 450, 2)
+        f /= np.max(np.abs(f)) + 1e-9
+        soft = lp(noise(sec), 350, 2) * np.exp(-T(sec) / 0.01)
+        soft /= np.max(np.abs(soft)) + 1e-9
+        out += (f * 0.7 + soft * 0.3) * flesh * 0.6
+    return out
+
+
+def friction(parts, sec, rate=900, amp=0.25, rise=0.0, width_ms=0.05):
+    """Трение металла/полимера: поток микроударов, возбуждающих те же детали (так скольжение звучит по-настоящему)."""
+    n = int(sec * SR)
+    exc = np.zeros(n)
+    t = 0.0
+    while t < sec:
+        k = int(t * SR)
+        w = max(2, int(width_ms / 1000 * SR))
+        if k + w < n:
+            prog = t / sec
+            env = np.sin(np.pi * prog) ** 0.5 * (1 + rise * prog)
+            exc[k:k + w] += amp * env * rng.uniform(0.2, 1.0) * np.sin(np.pi * np.arange(w) / w) * (1 if rng.random() > 0.5 else -1)
+        t += rng.exponential(1.0 / rate)
+    out = np.zeros(n + int(0.1 * SR))
+    e2 = np.concatenate([exc, np.zeros(int(0.1 * SR))])
+    for part, g in parts:
+        out += resonate(e2, part, g)
+    # шорох поверхности
+    out[:n] += hp(noise(sec), 3000, 2) * np.sin(np.pi * np.clip(T(sec) / sec, 0, 1)) * amp * 0.08
+    return out
+
+
+def fabric(sec, amp=0.06):
+    """Ткань и ремень: мягкий шорох с редкими хрусткими складками."""
+    t = T(sec)
+    base = bp(noise(sec), 500, 3500, 1) * np.sin(np.pi * np.clip(t / sec, 0, 1)) ** 1.2
+    folds = np.zeros(len(t))
+    for _ in range(int(sec * 25)):
+        k = rng.integers(0, len(t))
+        L = int(SR * rng.uniform(0.004, 0.012))
+        if k + L < len(t):
+            folds[k:k + L] += hp(rng.standard_normal(L), 1500, 1) * np.hanning(L) * rng.uniform(0.3, 1.0)
+    return (base + folds * 0.6) * amp
+
+
+def foley_finish(x, peak=0.9):
+    """Близкий микрофон: немного тепла, крошечная комната, без пережатия динамики."""
+    x = x + lp(x, 200, 2) * 0.3
+    x = reverb_tail(x, 0.15, 0.18, 0.06, 0.07, predelay=0.004)
+    return finish(x, peak, fade=0.02)
+
+
+# ------------------------------------------------------------------ механика
 def mag_out():
-    """«тик — щёлк — шшк»: кнопка, защёлка отпускает, магазин выходит из шахты."""
-    x = silence(0.4)
-    place(x, tick(4800) * 0.35, 0.0)                                         # палец на кнопке
-    place(x, hit(2100, weight=0.4, ring=0.006, crisp=0.6, body_f=320) * 0.7, 0.012)   # защёлка
-    place(x, whoosh(0.09, 2500, 5500, q=2.0) * 0.072, 0.035)                  # магазин скользит
-    place(x, hit(900, weight=0.8, ring=0.012, crisp=0.25, body_f=180) * 0.55, 0.11)   # вышел из шахты
-    place(x, jingle(2, 0.2) * 0.150, 0.12)
-    return polish(x, 0.85)
+    x = silence(0.45)
+    place(x, strike([('latch', 0.5), ('receiver', 0.25)], width_ms=0.12, bounces=1), 0.0)          # нажал кнопку
+    place(x, strike([('latch', 0.9), ('receiver', 0.6), ('mag', 0.4)], width_ms=0.10, bounces=2), 0.018)  # защёлка отпустила
+    place(x, friction([('mag', 1.0), ('receiver', 0.35)], 0.075, rate=1300, amp=0.2), 0.03)      # магазин скользит вниз
+    place(x, strike([('brass', 0.5), ('mag', 0.6)], width_ms=0.2, bounces=3, gap_ms=3), 0.09)       # патроны качнулись
+    place(x, strike([('mag', 0.8), ('receiver', 0.25)], width_ms=0.25, bounces=1), 0.105)            # вышел из шахты
+    place(x, fabric(0.15, 0.03), 0.1)
+    return foley_finish(x, 0.85)
 
 
 def mag_in():
-    """«тк — ЩЁЛК»: магазин задевает край шахты, затем твёрдо встаёт на защёлку."""
-    x = silence(0.4)
-    place(x, hit(1700, weight=0.3, ring=0.006, crisp=0.4, body_f=300) * 0.35, 0.05)   # край шахты
-    place(x, whoosh(0.06, 2000, 4500, q=2.2) * 0.056, 0.06)                   # входит
-    place(x, hit(1150, weight=1.2, ring=0.013, crisp=0.8, body_f=210) * 1.0, 0.13)    # защёлкнулся
-    place(x, tick(5200) * 0.25, 0.142)                                        # пружина защёлки
-    place(x, jingle(2, 0.2) * 0.125, 0.15)
-    return polish(x, 0.95)
+    x = silence(0.45)
+    place(x, strike([('mag', 0.35), ('receiver', 0.18)], width_ms=0.2, bounces=2), 0.06)           # губки задели шахту
+    place(x, friction([('mag', 0.9), ('receiver', 0.5)], 0.06, rate=1600, amp=0.18, rise=0.8), 0.065)
+    place(x, strike([('receiver', 1.0), ('latch', 1.0), ('mag', 0.7), ('brass', 0.35)],
+                    width_ms=0.08, bounces=3, gap_ms=1.2), 0.13)                                   # защёлка — ЩЁЛК
+    place(x, strike([('latch', 0.4), ('receiver', 0.2)], width_ms=0.06, bounces=1), 0.137)        # пружина защёлки
+    return foley_finish(x, 0.95)
 
 
 def mag_tap():
-    """Ладонь по дну магазина: мягкий плотный «тхап» и подтверждающий щелчок."""
-    x = silence(0.25)
-    place(x, knock(150, 0.15, 0.03) * 0.9, 0.0)
-    place(x, hit(1300, weight=0.4, ring=0.007, crisp=0.3, body_f=260) * 0.45, 0.004)
-    return polish(x, 0.85, room=0.1)
+    x = silence(0.3)
+    place(x, strike([('mag', 1.0), ('receiver', 0.35), ('brass', 0.2)], width_ms=0.6, bounces=1, flesh=1.0), 0.0)
+    return foley_finish(x, 0.85)
 
 
 def charge_pull():
-    """Пальцы на рукояти — «шк-ЩЁЛК»: рама рывком уходит назад и упирается."""
-    x = silence(0.35)
-    place(x, tick(4500) * 0.3, 0.0)
-    place(x, hit(2400, weight=0.2, ring=0.005, crisp=0.4, body_f=380) * 0.3, 0.004)   # рукоять снялась с защёлки
-    place(x, whoosh(0.1, 1800, 6000, q=2.5, curve=0.7) * 0.088, 0.08)          # рама идёт назад
-    place(x, hit(1000, weight=1.0, ring=0.014, crisp=0.6, body_f=200) * 0.9, 0.18)    # упор
-    return polish(x, 0.9)
+    x = silence(0.4)
+    place(x, strike([('polymer', 0.6), ('receiver', 0.2)], width_ms=0.3, bounces=1, flesh=0.4), 0.0)  # пальцы на рукояти
+    place(x, strike([('latch', 0.7), ('receiver', 0.3)], width_ms=0.1, bounces=1), 0.03)             # рукоять снялась с фиксатора
+    place(x, friction([('bolt', 0.8), ('receiver', 0.6)], 0.12, rate=1800, amp=0.16, rise=1.0), 0.06)   # рама идёт назад
+    place(x, strike([('bolt', 1.0), ('receiver', 0.9), ('spring', 0.15)], width_ms=0.12, bounces=2), 0.18)  # упор назад
+    return foley_finish(x, 0.9)
 
 
 def charge_release():
-    """«ЧА-ЧАНК»: рама срывается вперёд, затвор с силой встаёт на место, рукоять защёлкивается."""
-    x = silence(0.4)
-    place(x, whoosh(0.03, 3000, 7000, q=2.0) * 0.100, 0.0)
-    place(x, hit(800, weight=1.6, ring=0.016, crisp=0.9, body_f=160) * 1.0, 0.022)    # затвор закрылся
-    place(x, hit(1500, weight=0.5, ring=0.010, crisp=0.5, body_f=280) * 0.5, 0.034)   # рама добивает
-    place(x, hit(2600, weight=0.2, ring=0.006, crisp=0.6, body_f=400) * 0.35, 0.075)  # рукоять на защёлке
-    place(x, jingle(3, 0.25) * 0.125, 0.04)
-    return polish(x, 0.97)
+    x = silence(0.5)
+    place(x, friction([('bolt', 0.8), ('receiver', 0.5)], 0.025, rate=3000, amp=0.4), 0.0)          # рама срывается
+    place(x, strike([('bolt', 1.3), ('receiver', 1.2), ('spring', 0.25)], width_ms=0.09, bounces=3, gap_ms=1.0), 0.024)  # затвор закрылся
+    place(x, strike([('latch', 0.8), ('receiver', 0.3), ('polymer', 0.3)], width_ms=0.1, bounces=1), 0.06)  # рукоять встала на фиксатор
+    return foley_finish(x, 0.97)
+
+
+def sling(n=3, sec=0.3):
+    """Антабки и карабин ремня позвякивают."""
+    x = silence(sec + 0.15)
+    for t0 in np.sort(rng.uniform(0, sec * 0.7, n)):
+        place(x, strike([('swivel', rng.uniform(0.3, 0.7))], width_ms=0.08, bounces=1), t0)
+    return x
 
 
 def rattle(n=4, sec=0.3):
-    """Оружие покачнулось: антабки и ремень."""
-    x = silence(sec)
-    place(x, jingle(n, sec) * 0.400, 0.0)
-    place(x, whoosh(sec * 0.6, 900, 2200, q=1.0) * 0.032, 0.0)
-    return polish(x, 0.55, room=0.08)
+    x = silence(sec + 0.15)
+    place(x, sling(n, sec), 0.0)
+    place(x, fabric(sec * 0.7, 0.025), 0.0)
+    return foley_finish(x, 0.55)
 
 
 def gun_draw():
-    """Оружие снимается с ремня: «вжух» вверх, звяканье, ладонь уверенно ложится на рукоять."""
-    x = silence(0.7)
-    place(x, whoosh(0.32, 500, 2600, q=1.3, curve=0.8, attack=0.45) * 0.168, 0.02)
-    place(x, jingle(4, 0.32) * 0.200, 0.08)
-    place(x, hit(1250, weight=1.0, ring=0.010, crisp=0.45, body_f=190) * 0.8, 0.36)   # хват
-    place(x, knock(120, 0.12, 0.02) * 0.35, 0.36)
-    place(x, jingle(2, 0.18) * 0.125, 0.40)
-    return polish(x, 0.85)
+    x = silence(0.75)
+    place(x, fabric(0.32, 0.07), 0.03)                                                              # снимается с ремня
+    place(x, sling(3, 0.3) * 0.7, 0.08)
+    place(x, strike([('polymer', 0.7), ('receiver', 0.35)], width_ms=0.7, bounces=1, flesh=0.8), 0.36)  # ладонь на рукоять
+    place(x, strike([('receiver', 0.5), ('bolt', 0.25), ('spring', 0.08)], width_ms=0.3, bounces=1), 0.37)  # оружие встряхнулось
+    place(x, sling(2, 0.15) * 0.5, 0.39)
+    return foley_finish(x, 0.85)
 
 
 def gun_holster():
-    """Оружие уходит за спину: «вжух» вниз, звяканье, мягкий удар о спину."""
-    x = silence(0.6)
-    place(x, whoosh(0.3, 2400, 500, q=1.3, curve=0.9, attack=0.4) * 0.168, 0.0)
-    place(x, jingle(4, 0.3) * 0.175, 0.05)
-    place(x, knock(110, 0.15, 0.03) * 0.55, 0.32)
-    place(x, hit(900, weight=0.6, ring=0.009, crisp=0.2, body_f=170) * 0.35, 0.325)
-    return polish(x, 0.8)
+    x = silence(0.65)
+    place(x, fabric(0.3, 0.07), 0.0)
+    place(x, sling(3, 0.28) * 0.7, 0.04)
+    place(x, strike([('polymer', 0.6), ('receiver', 0.3)], width_ms=1.2, bounces=0, flesh=0.7), 0.32)   # легло на спину
+    place(x, sling(2, 0.15) * 0.4, 0.34)
+    return foley_finish(x, 0.8)
 
 
 def aim_in():
-    """Вскидка к плечу: короткий «вжух», приклад мягко упирается, тихий щелчок."""
-    x = silence(0.3)
-    place(x, whoosh(0.13, 700, 2400, q=1.4, curve=0.8, attack=0.5) * 0.160, 0.0)
-    place(x, knock(120, 0.12, 0.022) * 0.6, 0.11)
-    place(x, hit(2200, weight=0.2, ring=0.006, crisp=0.3, body_f=350) * 0.25, 0.112)
-    return polish(x, 0.6, room=0.08)
+    x = silence(0.32)
+    place(x, fabric(0.12, 0.06), 0.0)
+    place(x, strike([('polymer', 0.6)], width_ms=1.5, bounces=0, flesh=0.9), 0.11)                     # приклад в плечо
+    place(x, strike([('swivel', 0.2)], width_ms=0.08, bounces=1), 0.115)
+    return foley_finish(x, 0.6)
 
 
 def aim_out():
-    x = silence(0.22)
-    place(x, whoosh(0.12, 1800, 700, q=1.4, attack=0.3) * 0.160, 0.0)
-    place(x, jingle(1, 0.15) * 0.100, 0.06)
-    return polish(x, 0.45, room=0.08)
+    x = silence(0.25)
+    place(x, fabric(0.11, 0.06), 0.0)
+    place(x, strike([('swivel', 0.18)], width_ms=0.08, bounces=1), 0.07)
+    return foley_finish(x, 0.45)
 
 
 def dry_fire():
-    """Курок бьёт по пустому патроннику: сухой «тк»."""
-    x = silence(0.2)
-    place(x, hit(1900, weight=0.5, ring=0.008, crisp=0.8, body_f=300) * 0.9, 0.0)
-    return polish(x, 0.8, room=0.1)
+    x = silence(0.25)
+    place(x, strike([('bolt', 0.6), ('latch', 0.6), ('receiver', 0.5)], width_ms=0.08, bounces=1), 0.0)  # курок по ударнику
+    return foley_finish(x, 0.8)
 
 
 def fire_mode():
-    """Переводчик огня: два чётких фиксатора."""
-    x = silence(0.2)
-    place(x, hit(2600, weight=0.2, ring=0.005, crisp=0.7, body_f=420) * 0.55, 0.0)
-    place(x, hit(2300, weight=0.35, ring=0.006, crisp=0.8, body_f=380) * 0.8, 0.05)
-    return polish(x, 0.75, room=0.08)
+    x = silence(0.25)
+    place(x, strike([('latch', 0.6), ('receiver', 0.25)], width_ms=0.08, bounces=1), 0.0)
+    place(x, strike([('latch', 0.8), ('receiver', 0.35)], width_ms=0.07, bounces=1), 0.05)
+    return foley_finish(x, 0.75)
 
 
 def reload_full():
