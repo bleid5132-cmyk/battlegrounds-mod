@@ -23,13 +23,10 @@ public final class ModItems {
     public static final Map<String, GunItem> GUNS = new LinkedHashMap<>();
     public static final Map<AttachmentType, AttachmentItem> ATTACHMENTS = new EnumMap<>(AttachmentType.class);
 
-    public static final GunItem M416;
-
     static {
         for (GunStats stats : GunStats.ASSAULT_RIFLES) {
             GUNS.put(stats.id(), register(stats.id(), new GunItem(new Item.Settings().maxCount(1), stats)));
         }
-        M416 = GUNS.get("m416");
         for (AttachmentType type : AttachmentType.values()) {
             ATTACHMENTS.put(type, register(type.id, new AttachmentItem(new Item.Settings().maxCount(1), type)));
         }
@@ -42,7 +39,7 @@ public final class ModItems {
 
     public static final ItemGroup GROUP = Registry.register(Registries.ITEM_GROUP, Battlegrounds.id("main"),
             FabricItemGroup.builder()
-                    .icon(() -> new ItemStack(M416))
+                    .icon(() -> new ItemStack(AMMO_556))
                     .displayName(Text.translatable("itemGroup.battlegrounds.main"))
                     .entries((context, entries) -> {
                         for (GunItem gun : GUNS.values()) entries.add(gun.createLoaded());
