@@ -58,32 +58,35 @@ def env_exp(sec, tau, attack=0.0005):
     return a * np.exp(-t / tau)
 
 
-def modal(freqs, decays, amps, sec, strike=0.0004, jitter=0.01):
-    """Удар по металлической детали: сумма затухающих резонансов + короткий щелчок возбуждения."""
-    t = T(sec)
-    out = np.zeros_like(t)
-    for f, d, a in zip(freqs, decays, amps):
-        f = f * (1 + rng.normal(0, jitter))
-        out += a * np.sin(2 * np.pi * f * t + rng.random() * 6.28) * np.exp(-t / d)
-    exc = noise(sec) * np.exp(-t / strike)
-    return out + hp(exc, 1500) * 0.8
+def reso(x, f, q):
+    """Широкий резонанс (низкая добротность) — окраска без звона."""
+    f = min(f, SR * 0.45)
+    b_, a_ = signal.iirpeak(f, q, fs=SR)
+    return signal.lfilter(b_, a_, x)
 
 
 def click(base, sec=0.06, bright=1.0, damp=1.0):
-    """Металлический щелчок с неровным набором обертонов."""
-    ratios = np.array([1.0, 1.93, 2.71, 3.88, 5.21, 6.9])
-    freqs = base * ratios * (1 + rng.normal(0, 0.02, len(ratios)))
-    decays = np.array([0.030, 0.020, 0.014, 0.010, 0.007, 0.005]) / damp
-    amps = np.array([1.0, 0.8, 0.6, 0.45, 0.3, 0.2]) * np.array([1, bright, bright, bright ** 1.5, bright ** 2, bright ** 2])
-    return modal(freqs, decays, amps, sec)
+    """Металлический щелчок: короткий шумовой удар, окрашенный широкими резонансами детали (без тона)."""
+    t = T(sec)
+    exc = noise(sec) * np.exp(-t / (0.0012 / damp)) * np.clip(t / 0.00008, 0, 1)
+    out = np.zeros_like(t)
+    for r, g in ((1.0, 1.0), (1.63, 0.8 * bright), (2.45, 0.6 * bright), (3.6, 0.45 * bright ** 1.5)):
+        out += reso(exc, base * r * (1 + rng.normal(0, 0.03)), 4.5) * g
+    out += hp(exc, 3000) * 0.35 * bright
+    body = lp(noise(sec), 900) * np.exp(-t / (0.006 / damp)) * 0.4
+    out = out + body
+    return out / (np.max(np.abs(out)) + 1e-9)
 
 
 def thud(f0, sec=0.12, tau=0.025):
-    """Глухой удар (пластик/ладонь/плечо): низкий резонанс + приглушённый шум."""
+    """Глухой удар: одиночный импульс давления + низкочастотный шумовой удар (без гудения)."""
     t = T(sec)
-    body = np.sin(2 * np.pi * f0 * t * (1 - 0.25 * t / sec)) * np.exp(-t / tau)
-    n = lp(noise(sec), 1800) * np.exp(-t / (tau * 0.4))
-    return body + n * 0.6
+    n = int(SR / (2 * f0))
+    pulse = np.zeros_like(t)
+    pulse[:n] = np.sin(np.pi * np.arange(n) / n)
+    body = lp(noise(sec), f0 * 3, 2) * np.exp(-t / tau) * 2.5
+    out = pulse + body
+    return out / (np.max(np.abs(out)) + 1e-9)
 
 
 def scrape(sec, lo, hi, grain=0.004, rough=0.6, rise=0.0):
@@ -169,51 +172,58 @@ def friedlander(sec, T0, b=1.6):
     return p
 
 
+def dense_tail(sec, t60_low, t60_high, pre=0.012):
+    """Плотный хвост эха открытого места: шум, высокие гаснут быстрее; медленные «волны» отражений."""
+    t = T(sec)
+    out = np.zeros_like(t)
+    for lo, hi, t60 in ((50, 300, t60_low), (300, 1200, t60_low * 0.7), (1200, 4000, (t60_low + t60_high) / 2.5),
+                        (4000, 12000, t60_high)):
+        out += bp(noise(sec), lo, hi, 2) * np.exp(-6.9 * t / t60)
+    am = lp(np.abs(noise(sec)), 6, 2)
+    am = 0.55 + 0.45 * am / (am.max() + 1e-9)
+    out *= am
+    out[: int(pre * SR)] *= np.linspace(0, 1, int(pre * SR))
+    return out / (np.max(np.abs(out)) + 1e-9)
+
+
 def gunshot(kind='556', far=False):
-    if kind == '556':
-        T0, boom_f, boom_tau, crack_g, body_g, mech_f = 0.0016, 95, 0.075, 1.0, 1.0, 1150
-    elif kind == '762':
-        T0, boom_f, boom_tau, crack_g, body_g, mech_f = 0.0022, 72, 0.11, 1.15, 1.35, 950
-    else:  # с глушителем
-        T0, boom_f, boom_tau, crack_g, body_g, mech_f = 0.0030, 110, 0.035, 0.35, 0.35, 1200
-    dur = 0.9
+    """Выстрел слоями: удар давлением (punch), взрыв пороховых газов, треск пули, механика, хвост эха."""
+    heavy = kind == '762'
+    sup = kind == 'sup'
+    dur = 2.2 if not sup else 0.9
     x = silence(dur)
-    # 1) ударная волна у дула: резкий фронт, затем разрежение
-    blast = friedlander(0.05, T0 * rng.uniform(0.9, 1.1))
-    blast = blast + 0.25 * hp(noise(0.05), 2500) * np.exp(-T(0.05) / 0.004)
-    place(x, blast * body_g, 0.0)
-    # 2) низкий «бум» — газы и резонанс воздуха/земли
-    t = T(0.4)
-    boom = np.sin(2 * np.pi * boom_f * t * (1 - 0.35 * t / 0.4)) * np.exp(-t / boom_tau)
-    boom += lp(noise(0.4), 220) * np.exp(-t / (boom_tau * 0.8)) * 1.2
-    place(x, boom * 0.9 * body_g, 0.0008)
-    # 3) сверхзвуковой треск пули (N-волна) и шипение газов
-    if kind != 'sup':
-        nwave = np.concatenate([np.linspace(1, -1, int(SR * 0.00035)), np.zeros(10)])
-        place(x, hp(nwave, 800) * 0.9 * crack_g, 0.0003)
-    hiss = bp(noise(0.08), 2500, 11000) * np.exp(-T(0.08) / (0.012 if kind != 'sup' else 0.02))
-    place(x, hiss * (0.55 * crack_g if kind != 'sup' else 0.5), 0.0)
-    if kind == 'sup':
-        # «пф» из глушителя
-        pf = bp(noise(0.12), 300, 2600) * env_exp(0.12, 0.022, 0.002)
-        place(x, pf * 1.4, 0.0)
-    # 4) затворная рама: отход и удар в крайнее заднее, затем досылание вперёд
-    mech = mix(click(mech_f, 0.08, bright=0.9) * 0.22, click(mech_f * 1.7, 0.06, bright=1.1) * 0.12)
-    place(x, mech * (2.2 if kind == 'sup' else 1.0), 0.016)
-    place(x, click(mech_f * 0.8, 0.09, bright=0.8) * (0.18 if kind != 'sup' else 0.4), 0.052)
-    # перегрузка микрофона — плотность и «удар»
-    x = soft_clip(x / (np.max(np.abs(x)) + 1e-9), 3.0 if kind != 'sup' else 1.6)
+    t = T(0.3)
     if far:
-        # дальний выстрел: высокие съедены воздухом, треск слышен раньше бума, долгие раскаты
-        x = lp(x, 900, 2) + lp(x, 2500, 1) * 0.15
-        x = echoes(x, [(0.18, 0.5, 700), (0.42, 0.42, 600), (0.75, 0.33, 450), (1.15, 0.25, 350), (1.6, 0.16, 300)])
-        x = reverb_tail(x, 2.6, t60_low=2.4, t60_high=0.6, wet=0.75, predelay=0.03)
-        return finish(x, 0.9, fade=0.3)
-    # ранние отражения (земля, ближние предметы) и хвост открытого места
-    x = echoes(x, [(0.004, 0.35, 5000), (0.045, 0.22, 3000), (0.11, 0.16, 2000), (0.23, 0.12, 1400), (0.41, 0.08, 900)])
-    x = reverb_tail(x, 1.6 if kind != 'sup' else 0.7, t60_low=1.5 if kind != 'sup' else 0.6,
-                    t60_high=0.3, wet=0.5 if kind != 'sup' else 0.3)
-    return finish(x, 0.97, fade=0.15)
+        # дальний: только низ и середина, мягкая атака, долгие раскаты
+        boom = lp(noise(0.5), 650, 3) * env_exp(0.5, 0.11 if heavy else 0.08, 0.004)
+        place(x := silence(3.5), boom * 1.0, 0.0)
+        rum = lp(dense_tail(3.3, 2.6 if heavy else 2.2, 0.5, pre=0.06), 900, 2)
+        place(x, rum * 0.55, 0.05)
+        x = soft_clip(x / (np.max(np.abs(x)) + 1e-9), 2.0)
+        return finish(lp(x, 1800, 2), 0.9, fade=0.4)
+    # 1) удар давлением — одиночный импульс и низкий шумовой «пинок»
+    kick_ms = 0.009 if heavy else 0.007
+    n = int(kick_ms * SR)
+    kick = np.zeros(int(0.3 * SR))
+    kick[:n] = np.sin(np.pi * np.arange(n) / n)
+    kick += lp(noise(0.3), 160, 2) * np.exp(-t / (0.07 if heavy else 0.05)) * 3.0
+    place(x, kick * (0.5 if sup else 1.0), 0.0)
+    # 2) взрыв газов — широкополосный шум с резкой атакой; у глушителя приглушён
+    blast = friedlander(0.03, 0.0018 if heavy else 0.0014) * 1.2
+    gas = bp(noise(0.3), 180, 6500 if not sup else 2200, 2) * (np.exp(-t / 0.007) + 0.12 * np.exp(-t / 0.04))
+    place(x, mix(blast * (0.4 if sup else 1.0), gas * (1.6 if not sup else 1.1)), 0.0)
+    # 3) треск сверхзвуковой пули
+    crack = hp(noise(0.02), 3000, 2) * np.exp(-T(0.02) / 0.0022)
+    place(x, crack * (0.9 if not sup else 0.35), 0.0004)
+    # 4) механика: рама уходит назад и возвращается (короткие металлические удары, без звона)
+    place(x, click(1300, 0.04, bright=1.0, damp=1.0) * (0.12 if not sup else 0.35), 0.017)
+    place(x, click(950, 0.05, bright=0.8, damp=0.9) * (0.10 if not sup else 0.3), 0.055)
+    # перегрузка: плотность и громкость, как у настоящей записи выстрела
+    x = soft_clip(x / (np.max(np.abs(x)) + 1e-9), 3.0 if not sup else 2.0)
+    # 5) хвост открытого места
+    tail = dense_tail(dur - 0.01, (1.6 if heavy else 1.3) if not sup else 0.45, 0.25, pre=0.015)
+    place(x, tail * (0.16 if not sup else 0.08), 0.01)
+    return finish(x, 0.97, fade=0.2)
 
 
 # ------------------------------------------------------------------ механика
@@ -221,18 +231,18 @@ def mag_out():
     x = silence(0.32)
     place(x, click(3100, 0.04, bright=1.2, damp=1.4) * 0.5, 0.0)                    # кнопка защёлки
     place(x, click(1500, 0.05, bright=0.7, damp=1.2) * 0.35, 0.012)                 # защёлка отпускает
-    place(x, scrape(0.14, 1200, 7000, rough=0.7) * 0.3, 0.03)                       # магазин скользит вниз
+    place(x, scrape(0.07, 2000, 9000, rough=0.5) * 0.07, 0.03)                       # магазин скользит вниз
     place(x, mix(click(900, 0.08, bright=0.6) * 0.3, thud(260, 0.08, 0.015) * 0.25), 0.17)  # выходит из шахты
-    place(x, cloth(0.12, 1200, 6000) * 0.12, 0.17)
+    place(x, cloth(0.08) * 0.04, 0.17)
     return finish(reverb_tail(x, 0.25, 0.25, 0.08, 0.12), 0.85)
 
 
 def mag_in():
     x = silence(0.38)
-    place(x, scrape(0.13, 900, 6500, rough=0.75, rise=0.8) * 0.22, 0.0)             # входит в шахту
+    place(x, scrape(0.06, 2000, 9000, rough=0.5, rise=0.8) * 0.06, 0.07)             # входит в шахту
     place(x, mix(click(1250, 0.10, bright=1.0) * 0.9, thud(320, 0.10, 0.02) * 0.6), 0.13)  # защёлкнулся
     place(x, click(2600, 0.05, bright=1.3, damp=1.3) * 0.35, 0.137)
-    place(x, cloth(0.15, 1000, 6000) * 0.08, 0.16)
+    place(x, cloth(0.08) * 0.03, 0.16)
     return finish(reverb_tail(x, 0.3, 0.3, 0.08, 0.15), 0.95)
 
 
@@ -247,16 +257,14 @@ def mag_tap():
 def charge_pull():
     x = silence(0.32)
     place(x, click(2300, 0.03, bright=1.0, damp=1.6) * 0.3, 0.0)                    # пальцы на рукояти
-    place(x, scrape(0.15, 700, 5500, grain=0.003, rough=0.8, rise=1.2) * 0.35, 0.035)  # рама идёт назад против пружины
-    sp = np.sin(2 * np.pi * (420 + 260 * T(0.15) / 0.15) * T(0.15)) * 0.08 * np.sin(np.pi * T(0.15) / 0.15)
-    place(x, sp, 0.035)                                                              # звон возвратной пружины
+    place(x, scrape(0.10, 1800, 9000, grain=0.003, rough=0.5, rise=1.2) * 0.035, 0.08)  # рама идёт назад против пружины
     place(x, click(1050, 0.09, bright=1.1) * 0.8, 0.18)                             # упор в крайнем заднем
     return finish(reverb_tail(x, 0.3, 0.3, 0.08, 0.15), 0.9)
 
 
 def charge_release():
     x = silence(0.45)
-    place(x, scrape(0.02, 1500, 8000, rough=0.5) * 0.4, 0.0)                         # рама срывается вперёд
+    place(x, scrape(0.02, 2000, 9000, rough=0.4) * 0.1, 0.0)                         # рама срывается вперёд
     slam = mix(click(780, 0.16, bright=1.0) * 1.0, click(1650, 0.1, bright=1.2) * 0.5, thud(170, 0.15, 0.03) * 0.7)
     place(x, slam, 0.02)                                                             # удар затвора в крайнее переднее
     place(x, click(2900, 0.05, bright=1.3, damp=1.3) * 0.35, 0.045)                  # рукоять встала на защёлку
@@ -271,13 +279,13 @@ def rattle(n=4, sec=0.3):
     ts = np.sort(rng.uniform(0, sec * 0.6, n))
     for i, t0 in enumerate(ts):
         place(x, click(rng.uniform(1800, 4200), 0.05, bright=1.2, damp=1.8) * rng.uniform(0.15, 0.35), t0)
-    place(x, cloth(sec * 0.8) * 0.18, 0.0)
+    place(x, cloth(sec * 0.4) * 0.05, 0.0)
     return finish(x, 0.6)
 
 
 def gun_draw():
     x = silence(0.7)
-    place(x, cloth(0.38, 600, 4500, density=1.3) * 0.45, 0.0)                         # оружие снимается с ремня
+    place(x, cloth(0.25, 600, 4500, density=1.3) * 0.12, 0.08)                         # оружие снимается с ремня
     place(x, rattle(5, 0.35) * 0.5, 0.05)
     place(x, mix(thud(240, 0.12, 0.02) * 0.6, click(1300, 0.06, bright=0.6) * 0.25), 0.36)  # ладонь обхватывает рукоять
     place(x, rattle(2, 0.2) * 0.35, 0.41)
@@ -286,7 +294,7 @@ def gun_draw():
 
 def gun_holster():
     x = silence(0.55)
-    place(x, cloth(0.35, 600, 4500, density=1.2) * 0.45, 0.0)
+    place(x, cloth(0.22, 600, 4500, density=1.2) * 0.12, 0.0)
     place(x, rattle(4, 0.3) * 0.45, 0.05)
     place(x, thud(150, 0.15, 0.03) * 0.5, 0.33)                                     # оружие легло на спину
     return finish(reverb_tail(x, 0.3, 0.3, 0.1, 0.1), 0.75)
@@ -294,7 +302,7 @@ def gun_holster():
 
 def aim_in():
     x = silence(0.32)
-    place(x, cloth(0.16, 700, 5000, density=2.2) * 0.45, 0.0)                         # быстрый взмах
+    place(x, cloth(0.10, 700, 5000, density=2.2) * 0.12, 0.0)                         # быстрый взмах
     place(x, thud(130, 0.12, 0.025) * 0.55, 0.11)                                    # приклад в плечо
     place(x, click(3300, 0.03, bright=1.3, damp=1.8) * 0.12, 0.115)
     return finish(x, 0.6)
@@ -302,7 +310,7 @@ def aim_in():
 
 def aim_out():
     x = silence(0.22)
-    place(x, cloth(0.14, 700, 5000, density=2.0) * 0.45, 0.0)
+    place(x, cloth(0.09, 700, 5000, density=2.0) * 0.12, 0.0)
     place(x, click(3000, 0.03, bright=1.2, damp=1.8) * 0.08, 0.08)
     return finish(x, 0.45)
 
