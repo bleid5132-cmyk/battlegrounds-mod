@@ -52,11 +52,11 @@ public record GunStats(
             List.of(AUTO, SINGLE), 1, NO_GRIP_STOCK, 0.9f);
 
     public static final GunStats M16A4 = new GunStats("m16a4", AmmoType.A556, 8.6f, 30, 40,
-            0.075f, 44, 2.0f, 0.2f, 0.8f, 0.25f, 320f, 2.35f, 1.25f,
+            0.075f, 46, 2.0f, 0.2f, 0.8f, 0.25f, 320f, 2.35f, 1.25f,
             List.of(BURST, SINGLE), 3, NO_GRIP_STOCK, 1.05f);
 
     public static final GunStats SCAR_L = new GunStats("scar_l", AmmoType.A556, 8.2f, 30, 40,
-            0.096f, 44, 2.2f, 0.25f, 0.8f, 0.35f, 300f, 2.35f, 1.25f,
+            0.096f, 46, 2.2f, 0.25f, 0.8f, 0.35f, 300f, 2.35f, 1.25f,
             List.of(AUTO, SINGLE), 1, NO_STOCK, 0.98f);
 
     public static final GunStats QBZ = new GunStats("qbz", AmmoType.A556, 8.2f, 30, 40,
@@ -80,7 +80,7 @@ public record GunStats(
             List.of(AUTO, SINGLE), 1, NO_GRIP_STOCK, 0.88f);
 
     public static final GunStats MK47 = new GunStats("mk47_mutant", AmmoType.A762, 9.8f, 20, 30,
-            0.1f, 56, 2.4f, 0.2f, 1.1f, 0.35f, 330f, 2.35f, 1.25f,
+            0.1f, 46, 2.4f, 0.2f, 1.1f, 0.35f, 330f, 2.35f, 1.25f,
             List.of(BURST, SINGLE), 2, NO_STOCK, 0.86f);
 
     public static final GunStats ACE32 = new GunStats("ace32", AmmoType.A762, 8.6f, 30, 40,
@@ -88,7 +88,7 @@ public record GunStats(
             List.of(AUTO, SINGLE), 1, ALL, 0.9f);
 
     public static final GunStats K2 = new GunStats("k2", AmmoType.A556, 8.2f, 30, 40,
-            0.0857f, 50, 2.2f, 0.25f, 0.85f, 0.4f, 300f, 2.35f, 1.25f,
+            0.0857f, 46, 2.2f, 0.25f, 0.85f, 0.4f, 300f, 2.35f, 1.25f,
             List.of(AUTO, BURST, SINGLE), 3, NO_STOCK, 1.03f);
 
     public static final GunStats FAMAS = new GunStats("famas", AmmoType.A556, 7.8f, 25, 35,

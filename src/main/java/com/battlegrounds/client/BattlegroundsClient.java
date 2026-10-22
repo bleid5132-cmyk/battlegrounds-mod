@@ -69,7 +69,7 @@ public class BattlegroundsClient implements ClientModInitializer {
         HandledScreens.register(ModScreens.ATTACHMENTS, AttachmentScreen::new);
 
         // костные модели и анимации оружия (вид от первого лица по эталону)
-        GeoAssets.init("m416", "akm");
+        GeoAssets.init("m416", "akm", "m16a4", "mk47_mutant", "k2", "scar_l", "g36c");
 
         // модели оружия и обвесов, которые собираются на лету
         List<Identifier> extra = new ArrayList<>();
